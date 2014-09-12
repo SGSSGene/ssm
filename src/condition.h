@@ -12,11 +12,11 @@ namespace SimpleStateMachine {
 class ParameterImageList;
 class TransitionImage;
 
-typedef delegate<bool()> Condition;
+typedef delegate<bool()>                 Condition;
 typedef std::map<std::string, Condition> ConditionMap;
 
 typedef delegate<delegate<bool()>(ParameterImageList, TransitionImage const*)> ConditionPara;
-typedef std::map<std::string, ConditionPara>                     ConditionParaMap;
+typedef std::map<std::string, ConditionPara>                                   ConditionParaMap;
 }
 
 #endif

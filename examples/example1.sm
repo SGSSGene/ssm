@@ -1,0 +1,13 @@
+UniverseMachine
+	State!: message("Running in State")
+		true -> DecisionState
+
+	DecisionState!: message("what a decision!")
+		condition()  -> SendMessageState
+		else         -> DeadEnd
+	
+	SendMessageState!: message("I'm in true state")
+		true -> DeadEnd
+
+	DeadEnd: message("I'm a dead end, quiting")
+	

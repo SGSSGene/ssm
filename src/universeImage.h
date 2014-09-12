@@ -5,6 +5,7 @@
 
 #include <map>
 #include <memory>
+#include <ostream>
 #include <set>
 #include <string>
 #include <vector>
@@ -12,12 +13,13 @@
 namespace SimpleStateMachine {
 
 struct ParameterImage {
-	enum Type { Bool, Integer, String };
-	Type type;
-
 	bool v_b;
 	int v_i;
 	std::string v_s;
+
+	void stream(std::ostream& os, std::string tabs) const {
+		os<<tabs<<"{ "<<(v_b?"true":"false")<<", "<<v_i<<", std::string(\""<<v_s<<"\") }";
+	}
 
 	template<class T> T getValue() const;
 };
@@ -35,40 +37,66 @@ inline std::string ParameterImage::getValue() const {
 }
 
 
-struct ParameterImageList : public std::vector<ParameterImage> {};
+struct ParameterImageList {
+	std::vector<ParameterImage> pList;
+	void stream(std::ostream& os, std::string tabs) const {
+		os<<tabs<<"{ {// ParameterImageList\n";
+		for (auto s : pList) {
+			s.stream(os, tabs+"\t");
+			os<<",\n";
+		}
+		os<<tabs<<"} }";
+	}
+};
 
 struct FunctionImage {
 	std::string decoratedFunction;
 	std::string genericFunction;
 	std::string signature;
+	std::string extendedFunction;
+	std::string broadSignature;
 	ParameterImageList parameters;
+	void stream(std::ostream& os, std::string tabs) const {
+		std::string tab2 = tabs+"\t";
+		os<<tabs<<"{ // FunctionImage\n";
+		os<<tab2<<"std::string(\""<<decoratedFunction<<"\"), std::string(\""<<genericFunction<<"\"), std::string(\""<<signature<<"\"), std::string(\"\"), std::string(\"\"),\n";
+		parameters.stream(os, tab2); os<<"\n";
+		os<<tabs<<"}";
+	}
 };
 
 struct TransitionImage {
 	FunctionImage functionImage;
 	std::string targetState;
 
-	delegate<bool(bool)> check_b;
-	delegate<bool(int)> check_i;
-	delegate<bool(std::string)> check_s;
+	enum DataType { Boolean, Integer, String };
+	DataType dataType;
 
-	template<class T> delegate<bool(T)> getCheck() const;
+	enum class Compare { Equal, Unequal, LessEqual, GreaterEqual, Less, Greater };
+	Compare compareSymbol;
+
+	std::string compareValue;
+
+	void stream(std::ostream& os, std::string tabs) const {
+		std::string tab2 = tabs+"\t";
+		os<<tabs<<"{ // Transition Image\n";
+		functionImage.stream(os, tab2); os<<",\n";
+		os<<tab2<<"std::string(\""<<targetState<<"\"), ";
+		if (dataType == DataType::Boolean) os<<"SimpleStateMachine::TransitionImage::DataType::Boolean";
+		else if (dataType == DataType::Integer) os<<"SimpleStateMachine::TransitionImage::DataType::Integer";
+		else if (dataType == DataType::String) os<<"SimpleStateMachine::TransitionImage::DataType::String";
+		os<<", ";
+		if (compareSymbol == Compare::Equal) os<<"SimpleStateMachine::TransitionImage::Compare::Equal";
+		else if (compareSymbol == Compare::Unequal) os<<"SimpleStateMachine::TransitionImage::Compare::Unequal";
+		else if (compareSymbol == Compare::LessEqual) os<<"SimpleStateMachine::TransitionImage::Compare::LessEqual";
+		else if (compareSymbol == Compare::GreaterEqual) os<<"SimpleStateMachine::TransitionImage::Compare::GreaterEqual";
+		else if (compareSymbol == Compare::Less) os<<"SimpleStateMachine::TransitionImage::Compare::Less";
+		else if (compareSymbol == Compare::Greater) os<<"SimpleStateMachine::TransitionImage::Compare::Greater";
+		os<<", ";
+		os<<"std::string(\""<<compareValue<<"\")\n";
+		os<<tabs<<"}";
+	}
 };
-template<>
-inline auto TransitionImage::getCheck() const
-	-> decltype(check_b) {
-	return check_b;
-}
-template<>
-inline auto TransitionImage::getCheck() const
-	-> decltype(check_i) {
-	return check_i;
-}
-template<>
-inline auto TransitionImage::getCheck() const
-	-> decltype(check_s) {
-	return check_s;
-}
 
 struct StateImage {
 	FunctionImage function;
@@ -76,10 +104,43 @@ struct StateImage {
 	bool        force;
 	std::vector<TransitionImage> transitionSet;
 	std::vector<std::string>     machineNameSet;
+	void stream(std::ostream& os, std::string tabs) const {
+		std::string tab2 = tabs+"\t";
+		os<<tabs<<"{ // State Image\n";
+		function.stream(os, tab2); os <<",\n";
+		os<<tab2<<(force?"true":"false")<<",\n";
+
+		os<<tab2<<"{ // TransitionList\n";
+		for (auto t : transitionSet) {
+			t.stream(os, tab2+"\t"); os<<",\n";
+		}
+		os<<tab2<<"},\n";
+		os<<tab2<<"{ // Sub MachineList\n";
+		for (auto s : machineNameSet) {
+			os<<tab2<<"\t"<<"std::string(\""<<s<<"\"),\n";
+		}
+		os<<tab2<<"}\n";
+		os<<tabs<<"}";
+	}
 };
 struct MachineImage {
 	std::string initialState;
 	std::map<std::string, StateImage> stateImageMap;
+
+	void stream(std::ostream& os, std::string tabs) const {
+		std::string tab2 = tabs+"\t";
+		std::string tab3 = tab2+"\t";
+		os<<tabs<<"{ // Machine Image\n";
+		os<<tab2<<"std::string(\""<<initialState<<"\"),\n";
+		os<<tab2<<"{ // StateImageMap\n";
+		for (auto e : stateImageMap) {
+			os<<tab3<<"{ std::string(\""<<e.first<<"\"),\n";
+			e.second.stream(os, tab3+"\t"); os<<"\n";
+			os<<tab3<<"},\n";
+		}
+		os<<tab2<<"}\n";
+		os<<tabs<<"}";
+	}
 };
 typedef std::map<std::string, MachineImage> UniverseImage;
 

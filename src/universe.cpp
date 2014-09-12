@@ -178,6 +178,8 @@ public:
 			if(!_line.parseSymbol(c)) return false;
 		}
 		line = _line.getRestLine();
+		results.clear();
+		results.push_back(symbols);
 		if (whitespaces) parseWhiteSpace();
 		return true;
 	}
@@ -185,53 +187,62 @@ public:
 		return (line.size() == 0);
 	}
 };
-FunctionImage parseFunctionString(std::string _line) {
+FunctionImage parseFunctionString(std::string _line, int callNr=0) {
 	FunctionImage f;
 	Line line(_line);
 
 	line.parseWord(true);
 	f.decoratedFunction = line.getResults().at(0);
 	f.genericFunction   = line.getResults().at(0);
+	f.extendedFunction  = line.getResults().at(0);
 
 	if (line.parseParameterCall(true)) {
 		Line para(line.getResults().at(0));
 		para.parseWhiteSpace();
 		f.decoratedFunction += "(";
+		f.extendedFunction  += "(";
 		while (!para.isEmpty()) {
 			ParameterImage parameter;
 
 			if (para.parseBool(true)) {
-				parameter.type = ParameterImage::Type::Bool;
 				parameter.v_b = para.getResults().at(0) == "true";
 				f.signature += "bool, ";
 
 				f.decoratedFunction += para.getResults().at(0);
 			} else if (para.parseInteger(true)) {
-				parameter.type = ParameterImage::Type::Integer;
 				std::istringstream ( para.getResults().at(0) ) >> parameter.v_i;
 				f.signature += "int, ";
 
 				f.decoratedFunction += para.getResults().at(0);
 			} else if (para.parseString(true)) {
-				parameter.type = ParameterImage::Type::String;
 				parameter.v_s = para.getResults().at(0);
 				f.signature += "std::string, ";
 
 				f.decoratedFunction += "\\\""+para.getResults().at(0)+"\\\"";
 			}
-			f.parameters.push_back(parameter);
+			f.parameters.pList.push_back(parameter);
+
+			std::stringstream ss;
+			ss<<"std::get<"<<callNr<<">(p)";
+			f.extendedFunction  += ss.str();
+			callNr += 1;
+
 			if (!para.parseSymbol(',', true)) break;
 			f.decoratedFunction += ", ";
+			f.extendedFunction  += ", ";
 		}
 		f.decoratedFunction += ")";
+		f.extendedFunction  += ")";
 	}
 	if (line.parseSymbol('.')) {
-		FunctionImage subCall = parseFunctionString(line.getRestLine());
+		FunctionImage subCall = parseFunctionString(line.getRestLine(), callNr);
 		f.decoratedFunction += "." + subCall.decoratedFunction;
+		f.extendedFunction  += "." + subCall.extendedFunction;
 		f.genericFunction   += "_" + subCall.genericFunction;
 		f.signature         += subCall.signature;
-		for (auto p : subCall.parameters) {
-			f.parameters.push_back(p);
+		f.broadSignature    = f.signature;
+		for (auto p : subCall.parameters.pList) {
+			f.parameters.pList.push_back(p);
 		}
 	}
 	return f;
@@ -277,6 +288,7 @@ std::tuple<bool, std::string, StateImage> parseStateString(std::string _line) {
 			functionImage.signature.erase(functionImage.signature.size()-1);
 		}
 	}
+	functionImage.broadSignature = "void, "+functionImage.signature;
 	functionImage.signature = "void(" + functionImage.signature + ")";
 
 	StateImage stateImage {functionImage, force, {}, {}};
@@ -292,14 +304,16 @@ std::tuple<bool, TransitionImage> parseTransitionString(std::string _line) {
 
 	std::string targetState;
 	auto parameters = ParameterImageList();
-	delegate<bool(bool)> check_b = [] (bool b) { return b; };
-	delegate<bool(int)> check_i;
-	delegate<bool(std::string)> check_s;
 
+	TransitionImage::DataType compareDataType = TransitionImage::DataType::Boolean;
+	TransitionImage::Compare compareSymbol = TransitionImage::Compare::Equal;
+	std::string compareValue  = "true";
+
+	std::string returnType = "bool";
 
 	if (line.parseSymbol('!', true)) {
 		negate = true;
-		check_b = [] (bool b) { return !b; };
+		compareValue = "false";
 	}
 	if (!line.parseFunction(true)) return errorResult;
 	FunctionImage functionImage = parseFunctionString(line.getResults().at(0));
@@ -309,91 +323,69 @@ std::tuple<bool, TransitionImage> parseTransitionString(std::string _line) {
 		functionImage.signature.erase(functionImage.signature.size()-1);
 		functionImage.signature.erase(functionImage.signature.size()-1);
 	}
+	functionImage.broadSignature = functionImage.signature;
 	functionImage.signature = "(" + functionImage.signature + ")";
 
+
 	if (line.parseSymbols("==", true) && !negate) {
+		compareSymbol = TransitionImage::Compare::Equal;
 		if (line.parseString(true)) {
-			auto s = line.getResults().at(0);
-			check_s = [s](std::string _s) { return _s == s; };
-
-			functionImage.decoratedFunction += std::string(" == \\\"") + s + "\\\"";
-			functionImage.signature = "std::string" + functionImage.signature;
+			compareValue = line.getResults().at(0);
+			returnType = "std::string";
 		} else if (line.parseInteger(true)) {
-			int i; std::istringstream ( line.getResults().at(0) ) >> i;
-			check_i = [i](int _i) { return _i == i; };
-
-			functionImage.decoratedFunction += std::string(" == ") + line.getResults().at(0);
-			functionImage.signature = "int" + functionImage.signature;
-		} else if (line.parseBool(true)) {
-			auto b = (line.getResults().at(0) == "true")?true:false;
-			check_b = [b](bool _b) { return _b == b; };
-
-			functionImage.decoratedFunction += std::string(" == ") + line.getResults().at(0);
-			functionImage.signature = "bool" + functionImage.signature;
+			compareValue = line.getResults().at(0);
+			returnType = "int";
+			} else if (line.parseBool(true)) {
+			compareValue = line.getResults().at(0);
+			returnType = "bool";
 		} else return errorResult;
+		functionImage.decoratedFunction += std::string(" == ") + "\\\"" + compareValue +"\\\"";
 	} else if (line.parseSymbols("!=", true) && !negate) {
+		compareSymbol = TransitionImage::Compare::Unequal;
 		if (line.parseString(true)) {
-			auto s = line.getResults().at(0);
-			check_s = [s](std::string _s) { return _s != s; };
-
-			functionImage.decoratedFunction += std::string(" != \\\"") + line.getResults().at(0) + "\\\"";
-			functionImage.signature = "std::string" + functionImage.signature;
+			compareValue = line.getResults().at(0);
+			returnType = "std::string";
 		} else if (line.parseInteger(true)) {
-			int i; std::istringstream ( line.getResults().at(0) ) >> i;
-			check_i = [i](int _i) { return _i != i; };
-
-			functionImage.decoratedFunction += std::string(" != ") + line.getResults().at(0);
-			functionImage.signature = "int" + functionImage.signature;
+			compareValue = line.getResults().at(0);
+			returnType = "int";
 		} else if (line.parseBool(true)) {
-			auto b = (line.getResults().at(0) == "true")?true:false;
-			check_b = [b](bool _b){ return _b != b; };
-
-			functionImage.decoratedFunction += std::string(" != ") + line.getResults().at(0);
-			functionImage.signature = "bool" + functionImage.signature;
+			compareValue = line.getResults().at(0);
+			returnType = "bool";
 		} else return errorResult;
-	} else if (!negate && line.parseSymbols(">=", true)) {
+		functionImage.decoratedFunction += std::string(" != ") + "\\\"" + compareValue + "\\\"";
+	} else if (!negate && (line.parseSymbols(">=", true)
+	                       || line.parseSymbols("<=", true)
+	                       || line.parseSymbols(">", true)
+	                       || line.parseSymbols("<", true))) {
+		auto _compareSymbol = line.getResults().at(0);
 		if (line.parseInteger(true)) {
-			int i; std::istringstream ( line.getResults().at(0) ) >> i;
-			check_i = [i](int _i) { return _i >= i; };
-
-			functionImage.decoratedFunction += std::string(" >= ") + line.getResults().at(0);
-			functionImage.signature = "int" + functionImage.signature;
+			compareValue = line.getResults().at(0);
+			functionImage.decoratedFunction += " " + _compareSymbol + " " + line.getResults().at(0);
+			returnType = "int";
 		} else return errorResult;
-	} else if (!negate && line.parseSymbols("<=", true)) {
-		if (line.parseInteger(true)) {
-			int i; std::istringstream ( line.getResults().at(0) ) >> i;
-			check_i = [i](int _i) { return _i <= i; };
+		if (_compareSymbol == ">=") compareSymbol = TransitionImage::Compare::GreaterEqual;
+		if (_compareSymbol == "<=") compareSymbol = TransitionImage::Compare::LessEqual;
+		if (_compareSymbol == ">") compareSymbol = TransitionImage::Compare::Greater;
+		if (_compareSymbol == "<") compareSymbol = TransitionImage::Compare::Less;
 
-			functionImage.decoratedFunction += std::string(" <= ") + line.getResults().at(0);
-			functionImage.signature = "int" + functionImage.signature;
-		} else return errorResult;
-	} else if (!negate && line.parseSymbols(">", true)) {
-		if (line.parseInteger(true)) {
-			int i; std::istringstream ( line.getResults().at(0) ) >> i;
-			check_i = [i](int _i) { return _i > i; };
-
-			functionImage.decoratedFunction += std::string(" > ") + line.getResults().at(0);
-			functionImage.signature = "int" + functionImage.signature;
-		} else return errorResult;
-	} else if (!negate && line.parseSymbols("<", true)) {
-		if (line.parseInteger(true)) {
-			int i; std::istringstream ( line.getResults().at(0) ) >> i;
-			check_i = [i](int _i) { return _i < i; };
-
-			functionImage.decoratedFunction += std::string(" < ") + line.getResults().at(0);
-			functionImage.signature = "int" + functionImage.signature;
-		} else return errorResult;
 
 	} else {
-		functionImage.signature = "bool" + functionImage.signature;
+		returnType = "bool";
 	}
 
 	if (!line.parseSymbols("->", true)) return errorResult;
 	if (!line.parseWord(true))          return errorResult;
 	if (line.getRestLine().size() > 0)  return errorResult;
 
+	if (functionImage.broadSignature != "") {
+		functionImage.broadSignature = returnType +", "+functionImage.broadSignature;
+	} else {
+		functionImage.broadSignature = returnType;
+	}
+	functionImage.signature = returnType += functionImage.signature;
+
 	targetState = line.getResults().at(0);;
-	TransitionImage transitionImage = {functionImage, targetState, check_b, check_i, check_s};
+	TransitionImage transitionImage = {functionImage, targetState, compareDataType, compareSymbol, compareValue};
 	return std::make_tuple(true, transitionImage);
 }
 
@@ -411,11 +403,18 @@ Universe::Universe() {
 	conditionParaMap["true"] = [](ParameterImageList, TransitionImage const*)  { return []() { return true;  }; };
 	conditionParaMap["else"] = [](ParameterImageList, TransitionImage const*)  { return []() { return true;  }; };
 	conditionParaMap["false"] = [](ParameterImageList, TransitionImage const*) { return []() { return false; }; };
+	ignoreConditions.insert("true");
+	ignoreConditions.insert("else");
+	ignoreConditions.insert("false");
+
 	actionParaMap["__void__"] = [](ParameterImageList) { return []() {}; };
 //!TODO __unknown__ should probably throw an error
 	actionParaMap["__unknown__"] = [](ParameterImageList) { return []() {
 		std::cout<<"unknown function is beeing called"<<std::endl;
 	}; };
+	ignoreActions.insert("");
+	ignoreActions.insert("__void__");
+	ignoreActions.insert("__unknown__");
 
 }
 
@@ -494,6 +493,10 @@ Universe const& Universe::operator=(Universe const& _universe) {
 
 	requiredConditions       = _universe.requiredConditions;
 	requiredActions          = _universe.requiredActions;
+
+	ignoreActions            = _universe.ignoreActions;
+	ignoreConditions         = _universe.ignoreConditions;
+
 	actionParaMap            = _universe.actionParaMap;
 	conditionParaMap         = _universe.conditionParaMap;
 
@@ -503,8 +506,11 @@ Universe const& Universe::operator=(Universe&& _universe) {
 	errorMessages.clear();
 	errorMessages << _universe.errorMessages.str();
 
-	requiredConditions       = std::move(_universe.requiredConditions);
 	requiredActions          = std::move(_universe.requiredActions);
+	requiredConditions       = std::move(_universe.requiredConditions);
+
+	ignoreActions            = std::move(_universe.ignoreActions);
+	ignoreConditions         = std::move(_universe.ignoreConditions);
 
 	actionParaMap            = std::move(_universe.actionParaMap);
 	conditionParaMap         = std::move(_universe.conditionParaMap);
@@ -590,10 +596,15 @@ std::shared_ptr<Machine> Universe::bootstrap(std::string const& _ifile) {
 std::shared_ptr<Machine> Universe::bootstrap(std::istream& _ifile) {
 	auto image = parse(_ifile);
 	extractAllRequirements(image);
+	return bootstrap(image);
+}
+std::shared_ptr<Machine> Universe::bootstrap(UniverseImage const& _universeImage) {
+	if (_universeImage.size() == 0) return std::shared_ptr<Machine>();
 	auto a = actionParaMap;
 	auto c = conditionParaMap;
-	return bootstrap(image, a, c, "UniverseMachine");
+	return bootstrap(_universeImage, a, c, "UniverseMachine");
 }
+
 std::shared_ptr<Machine> Universe::bootstrap(UniverseImage const& _universeImage, ActionParaMap _actionParaMap, ConditionParaMap _conditionParaMap, std::string const& _machineName) {
 	if (_universeImage.find(_machineName) == _universeImage.end()) {
 		appendError(0, "Machine name couldn't be found", _machineName);
@@ -647,6 +658,8 @@ std::shared_ptr<Machine> Universe::bootstrap(UniverseImage const& _universeImage
 			for (auto x : subMachine->stateMap) {
 				std::string condition = machineName;
 				condition.append(".").append(x.first);
+
+				ignoreConditions.insert(condition);
 
 				_conditionParaMap[condition] = [=](ParameterImageList, TransitionImage const*) {
 					return [=]() {

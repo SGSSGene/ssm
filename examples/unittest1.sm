@@ -1,0 +1,192 @@
+UniverseMachine
+	State0!: message("Starte Tests:")
+		true -> TestBoolean1
+	
+	TestBoolean1:
+		TestBoolean1.Finish -> TestBoolean2
+		* TestBoolean1
+
+	TestBoolean2:
+		TestBoolean2.Finish -> TestBoolean3
+		* TestBoolean2
+	
+	TestBoolean3:
+		TestBoolean3.Finish -> TestInteger
+		* TestBoolean3
+	
+	TestInteger:
+		TestInteger.Finish -> TestString
+		* TestInteger
+
+	TestString:
+		TestString.Finish -> Finish
+		* TestString
+
+
+	Finish: message("finished all tests")
+
+
+TestBoolean1
+	Start!: message("TestBoolean1: start")
+		true -> T1
+	T1:
+		false -> Error
+		else -> T2
+	T2:
+		condition_true() -> T3
+		else -> Error
+	T3:
+		!condition_false() -> T4
+		else -> Error
+	T4:
+		condition_true() == true -> T5
+		else -> Error
+	T5:
+		condition_false() == false -> T6
+		else -> Error
+	T6:
+		condition_true() != false -> T7
+		else -> Error
+	T7:
+		condition_false() != true -> T8
+		else -> Error
+	T8:
+		true -> Success
+
+	Error!: message("failed")
+		true -> Finish
+	Success!: message("succeeded")
+		true -> Finish
+	Finish:
+
+TestBoolean2
+	Start!: message("TestBoolean2: start")
+		true -> T1
+	T1:
+		identity(true) -> T2
+		else -> Error
+	T2:
+		!identity(false) -> T3
+		else -> Error
+	T3:
+		identity(false) == false -> T4
+		else -> Error
+	T4:
+		negate(false) -> T5
+		else -> Error
+	T5:
+		!negate(true) -> T6
+		else -> Error
+	T6:
+		negate(true) == false -> T7
+		else -> Error
+	T7:
+		true -> Success
+
+	Error!: message("failed")
+		true -> Finish
+	Success!: message("succeeded")
+		true -> Finish
+	Finish:
+
+TestBoolean3
+	Start!: message("TestBoolean3: start")
+		true -> T1
+	T1:
+		mirror(false).condition_true() -> T2
+		else -> Error
+	T2:
+		mirror(true).condition_false() -> T3
+		else -> Error
+	T3:
+		!mirror(true).condition_true() -> T4
+		else -> Error
+	T4:
+		!mirror(true).negate(false) -> T5
+		else -> Error
+	T5:
+		equals(true, true)  == false -> Error
+		equals(true, false)          -> Error
+		equals(true, false) != false -> Error
+		equals(true, false) == true  -> Error
+		!equals(true, true)          -> Error
+		equals(true, true)           -> T6
+		else                         -> Error
+	T6:
+		true -> Success
+
+	Error!: message("failed")
+		true -> Finish
+	Success!: message("succeeded")
+		true -> Finish
+	Finish:
+
+TestInteger
+	Start!: message("TestInteger: start")
+		true -> T1
+	T1:
+		getConst1() != 1 -> Error
+		getConst2() == 1 -> Error
+		getConst1() != 1 -> Error
+		getConst2() != 2 -> Error
+		getConst2() <= 1 -> Error
+		getConst2() <  2 -> Error
+		getConst2() <  1 -> Error
+		getConst2() >  2 -> Error
+		getConst2() >  3 -> Error
+		getConst2() >= 3 -> Error
+		getConst1() == 1 -> T2
+		else -> Error
+
+	T2:
+		getConst1() == -1 -> Error
+		getConst1() <  -1 -> Error
+		getConst1() != -1 -> T3
+		else -> Error
+
+	T3:
+		is1(2) -> Error
+		is1(1) -> T4
+		else   -> Error
+
+	T4:
+		keepSign(-5, true) != -5 -> Error
+		keepSign(-5, false) != 5 -> Error
+		keepSign(-5, false) == 5 -> T5
+	T5:
+		true -> Success
+
+	Error!: message("failed")
+		true -> Finish
+	Success!: message("succeeded")
+		true -> Finish
+	Finish:
+
+
+TestString
+	Start!: message("TestString: start")
+		true -> T1
+	T1:
+		getConstString() != "test" -> Error
+		getConstString() == "test" -> T2
+		else -> Error
+	T2:
+		!isStringTest("test") -> Error
+		isStringTest("blub")  -> Error
+		isStringTest("test")  -> T3
+		else -> Error
+	T3:
+		copyString("test") != "test" -> Error
+		copyString("test") == "blub" -> Error
+		copyString("blub") == "test" -> Error
+		copyString("haha") == "haha" -> T4
+		else -> Error
+	T4:
+		true -> Success
+
+	Error!: message("failed")
+		true -> Finish
+	Success!: message("succeeded")
+		true -> Finish
+	Finish:
+

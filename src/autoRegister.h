@@ -7,8 +7,8 @@
 
 #define DEF_AUTO_REGISTER_BEGIN \
 namespace SimpleStateMachine { \
-template <class O> \
-void autoRegister(Universe* universe, O* o) {
+template <class O, typename ...Args> \
+void _autoRegister(Universe* universe, O* o) {
 
 #define DEF_AUTO_REGISTER_ACTION(NAME) { \
 	auto fct = get_method_call_##NAME(o); \

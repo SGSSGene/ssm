@@ -1,8 +1,6 @@
-#include "universe.h"
-#include <iostream>
-#include <chrono>
+#include "simpleStateMachine.h"
 
-#include "autoRegister.h"
+#include <chrono>
 
 DEF_GET_METHOD_CALL(message, message(get<0>(p)), void, std::string);
 DEF_GET_METHOD_CALL(condition_true, condition_true(), bool);
@@ -45,7 +43,6 @@ DEF_AUTO_REGISTER_BEGIN
 	DEF_AUTO_REGISTER_CONDITION(i)
 DEF_AUTO_REGISTER_END
 
-
 class GeneralTest {
 public:
 	void message(std::string message) {
@@ -79,87 +76,24 @@ public:
 	std::string copyString(std::string s) { return s; }
 };
 
-
-#include "magic.h"
-
-void testing() {
+int main(int, char**) {
 	SimpleStateMachine::Universe uni;
 
 	GeneralTest c1;
 	BooleanTest c2;
 	IntegerTest c3;
 	StringTest  c4;
+	uni.autoRegister(&c1);
+	uni.autoRegister(&c2);
+	uni.autoRegister(&c3);
+	uni.autoRegister(&c4);
 
-	autoRegister(&uni, &c1);
-	autoRegister(&uni, &c2);
-	autoRegister(&uni, &c3);
-	autoRegister(&uni, &c4);
-
-	auto machine = uni.bootstrap("testing.sm");
+	auto machine = uni.bootstrap("unittest1.sm");
 	std::cout<<uni.getErrorMessages();
 
 	std::cout<<std::boolalpha;
 
 	while (machine->executeStep());
 
-
-	std::cout<<"\n\nlets do some races"<<std::endl;
-	//#define callgrind
-	{
-		#ifndef callgrind
-		std::cout << "high_resolution_clock" << std::endl;
-		std::cout << std::chrono::high_resolution_clock::period::num << std::endl;
-		std::cout << std::chrono::high_resolution_clock::period::den << std::endl;
-		std::cout << "steady = " << std::boolalpha << std::chrono::high_resolution_clock::is_steady << std::endl << std::endl;
-
-		{
-			Magic m;
-			auto start = std::chrono::high_resolution_clock::now();
-			while (m.i < 10000000) {
-				m.inc();
-			}
-			auto end = std::chrono::high_resolution_clock::now();
-			// Store the time difference between start and end
-			auto diff = end - start;
-			std::cout << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
-		}
-		{
-			Magic m;
-
-			auto condition = m.getCondition();
-			auto action = m.getAction();
-
-			auto start = std::chrono::high_resolution_clock::now();
-			while (!condition()) {
-				action();
-			}
-			auto end = std::chrono::high_resolution_clock::now();
-			// Store the time difference between start and end
-			auto diff = end - start;
-			std::cout << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
-		}
-
-		#endif
-		{
-			Magic m;
-			SimpleStateMachine::Universe uni;
-			autoRegister(&uni, &m);
-
-			auto machine = uni.bootstrap("magic.sm");
-			#ifndef callgrind
-			std::cout<<uni.getErrorMessages();
-
-			auto start = std::chrono::high_resolution_clock::now();
-			#endif
-			while (machine->executeStep());
-			#ifndef callgrind
-			auto end = std::chrono::high_resolution_clock::now();
-			// Store the time difference between start and end
-			auto diff = end - start;
-			std::cout << std::chrono::duration <double, std::milli> (diff).count() << " ms" << std::endl;
-
-			#endif
-		}
-	}
-
+	return 0;
 }
