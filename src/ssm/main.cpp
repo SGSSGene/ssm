@@ -106,10 +106,25 @@ void c__11Generator(std::istream& _ifile, std::ostream& _ofile, std::string _mac
 	}
 
 	for (auto a : actionCalls) {
-		_ofile<<"DEF_GET_METHOD_CALL("<<a.first<<", "<<a.second.first<<", "<<a.second.second<<")"<<std::endl;
+//!TODO there must be a better solution, then cutting of the last two symbols
+		auto sign = a.second.second;
+		if (sign.substr(sign.size()-2, 2) == ", ") {
+			sign.erase(sign.size()-1);
+			sign.erase(sign.size()-1);
+		}
+
+		_ofile<<"DEF_GET_METHOD_CALL("<<a.first<<", "<<a.second.first<<", "<<sign<<")"<<std::endl;
 	}
 	for (auto a : conditionCalls) {
-		_ofile<<"DEF_GET_METHOD_CALL("<<a.first<<", "<<a.second.first<<", "<<a.second.second<<")"<<std::endl;
+//!TODO there must be a better solution, then cutting of the last two symbols
+		auto sign = a.second.second;
+		if (sign.substr(sign.size()-2, 2) == ", ") {
+			sign.erase(sign.size()-1);
+			sign.erase(sign.size()-1);
+		}
+
+
+		_ofile<<"DEF_GET_METHOD_CALL("<<a.first<<", "<<a.second.first<<", "<<sign<<")"<<std::endl;
 	}
 
 
