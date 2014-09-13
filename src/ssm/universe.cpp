@@ -37,7 +37,7 @@ Universe::Universe(std::istream& _istream, std::ostream& _ostream) {
 	_ostream << "\tedge [ fontsize=12 ];\n";
 
 	// print all machines
-	for (auto m : universeImage) {
+	for (auto m : universeImage.machineImageMap) {
 		_ostream<<"\t";
 		_ostream<<"subgraph cluster"<<m.first<<" {"<<std::endl;
 
@@ -173,9 +173,12 @@ UniverseImage Universe::parse(std::istream& _ifile) {
 				auto machine = parseMachineString(line);
 				if (std::get<0>(machine)) {
 					processed = true;
+					if (currentMachineName == "") { // First Machine
+						universeImage.rootMachine = std::get<1>(machine);
+					}
 					currentMachineName = std::get<1>(machine);
 					currentStateName   = "";
-					universeImage[currentMachineName] = MachineImage();
+					universeImage.machineImageMap[currentMachineName] = MachineImage();
 					parseState = state_t::State;
 				}
 			}
@@ -185,9 +188,9 @@ UniverseImage Universe::parse(std::istream& _ifile) {
 					processed = true;
 					currentStateName = std::get<1>(state);
 					auto stateImage = std::get<2>(state);
-					universeImage[currentMachineName].stateImageMap[currentStateName] = stateImage;
-					if (universeImage[currentMachineName].initialState == "") {
-						universeImage[currentMachineName].initialState = currentStateName;
+					universeImage.machineImageMap[currentMachineName].stateImageMap[currentStateName] = stateImage;
+					if (universeImage.machineImageMap[currentMachineName].initialState == "") {
+						universeImage.machineImageMap[currentMachineName].initialState = currentStateName;
 					}
 					parseState = state_t::Transition;
 				}
@@ -198,14 +201,14 @@ UniverseImage Universe::parse(std::istream& _ifile) {
 					processed = true;
 
 					auto transitionImage = std::get<1>(transition);
-					universeImage[currentMachineName].stateImageMap[currentStateName].transitionSet.push_back(transitionImage);
+					universeImage.machineImageMap[currentMachineName].stateImageMap[currentStateName].transitionSet.push_back(transitionImage);
 				}
 				auto subMachine = parseSubMachineString(line);
 				if (std::get<0>(subMachine)) {
 					processed = true;
 
 					auto subMachineName = std::get<1>(subMachine);
-					universeImage[currentMachineName].stateImageMap[currentStateName].machineNameSet.push_back(subMachineName);
+					universeImage.machineImageMap[currentMachineName].stateImageMap[currentStateName].machineNameSet.push_back(subMachineName);
 				}
 
 			}
@@ -228,18 +231,18 @@ std::shared_ptr<Machine> Universe::bootstrap(std::istream& _ifile) {
 	return bootstrap(image);
 }
 std::shared_ptr<Machine> Universe::bootstrap(UniverseImage const& _universeImage) {
-	if (_universeImage.size() == 0) return std::shared_ptr<Machine>();
+	if (_universeImage.machineImageMap.size() == 0) return std::shared_ptr<Machine>();
 	auto a = actionParaMap;
 	auto c = conditionParaMap;
-	return bootstrap(_universeImage, a, c, "UniverseMachine");
+	return bootstrap(_universeImage, a, c, _universeImage.rootMachine);
 }
 
 std::shared_ptr<Machine> Universe::bootstrap(UniverseImage const& _universeImage, ActionParaMap _actionParaMap, ConditionParaMap _conditionParaMap, std::string const& _machineName) {
-	if (_universeImage.find(_machineName) == _universeImage.end()) {
+	if (_universeImage.machineImageMap.find(_machineName) == _universeImage.machineImageMap.end()) {
 		appendError(0, "Machine name couldn't be found", _machineName);
 		return std::shared_ptr<Machine>();
 	}
-	auto machineImage = _universeImage.at(_machineName);
+	auto machineImage = _universeImage.machineImageMap.at(_machineName);
 
 	if (machineImage.stateImageMap.size() == 0) {
 		appendError(0, "Machine without states not allowed", _machineName);
@@ -332,7 +335,7 @@ std::shared_ptr<Machine> Universe::bootstrap(UniverseImage const& _universeImage
 
 void Universe::extractAllRequirements(UniverseImage const& universeImage) {
 	// Extract all conditions and actions
-	for (auto m : universeImage) {
+	for (auto m : universeImage.machineImageMap) {
 		for (auto s : m.second.stateImageMap) {
 			if (s.second.function.decoratedFunction != "") {
 				requiredActions[s.second.function.genericFunction] = s.second.function.signature;
@@ -351,8 +354,8 @@ void Universe::extractAllRequirements(UniverseImage const& universeImage) {
 					std::string p2 = c;
 					p1.erase(p1.begin() + p1.find('.'), p1.end());
 					p2.erase(p2.begin(), p2.begin() + p2.find('.')+1);
-					auto _m = universeImage.find(p1);
-					if (_m != universeImage.end()) {
+					auto _m = universeImage.machineImageMap.find(p1);
+					if (_m != universeImage.machineImageMap.end()) {
 						auto _s = _m->second.stateImageMap.find(p2);
 						if (_s != _m->second.stateImageMap.end()) {
 							continue;

@@ -160,7 +160,10 @@ struct MachineImage {
 		os<<tabs<<"}";
 	}
 };
-typedef std::map<std::string, MachineImage> UniverseImage;
+struct UniverseImage {
+	std::string rootMachine;
+	std::map<std::string, MachineImage> machineImageMap;
+};
 
 }
 #endif

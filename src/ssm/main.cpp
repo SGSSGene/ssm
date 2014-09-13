@@ -67,14 +67,17 @@ void c__11Generator(std::istream& _ifile, std::ostream& _ofile, std::string _mac
 	_ofile << "private:\n";
 	_ofile << "\tSimpleStateMachine::UniverseImage getImage() {\n";
 	_ofile << "\t\tstatic SimpleStateMachine::UniverseImage image_"<<_machineName<<" = {"<<std::endl;
-	_ofile << "\t// Machine Map\n";
+	_ofile << "\t\tstd::string(\""<<image.rootMachine<<"\"),\n";
+	_ofile << "\t\t{ // Machine Map\n";
 
-	for (auto iterM = image.begin(); iterM != image.end(); ++iterM) {
+
+	for (auto const& m : image.machineImageMap) {
 		_ofile << "\t\t// Machine Entry\n";
-		_ofile << "\t\t{ std::string(\"" << iterM->first <<"\"),\n";
-		iterM->second.stream(_ofile, "\t\t\t");
+		_ofile << "\t\t{ std::string(\"" << m.first <<"\"),\n";
+		m.second.stream(_ofile, "\t\t\t");
 		_ofile << "\n\t\t},\n";
 	}
+	_ofile <<"\t\t}\n";
 	_ofile <<"\t\t};\n";
 	_ofile <<"\t\treturn image_"<<_machineName<<";\n";
 	_ofile <<"\t}\n";
@@ -86,7 +89,7 @@ void c__11Generator(std::istream& _ifile, std::ostream& _ofile, std::string _mac
 	auto ignoreActions    = uni.getIgnoreActions();
 	auto ignoreConditions = uni.getIgnoreConditions();
 
-	for (auto m : image) {
+	for (auto m : image.machineImageMap) {
 		for (auto s : m.second.stateImageMap) {
 			ignoreConditions.insert(m.first+"."+s.first);
 			auto f = s.second.function;
