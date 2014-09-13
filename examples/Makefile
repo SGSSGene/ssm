@@ -1,15 +1,12 @@
 all: unittest1 unittest2 example1
 
-unittest1.o: unittest1.cpp
-	g++ -c -std=c++11 -O3 unittest1.cpp
-
-unittest1: unittest1.o
-	g++ -O3 \
+unittest1: unittest1.cpp unittest1.sm
+	g++ -std=c++11 -O3 \
 	    -o unittest1 \
-	    unittest1.o \
+	    unittest1.cpp \
 	    -lssm
 
-unittest2: ../src/* unittest2.cpp unittest1.sm
+unittest2: unittest2.cpp unittest1.sm
 	ssm --c++11 unittest1
 	g++ -std=c++11 \
 	    -O3 \
@@ -17,7 +14,7 @@ unittest2: ../src/* unittest2.cpp unittest1.sm
 	    unittest2.cpp \
 	    -lssm
 
-example1: ../src/* example1.cpp example1.sm
+example1: example1.cpp example1.sm
 	ssm --c++11 example1
 	g++ -std=c++11 \
 	    -O2 \

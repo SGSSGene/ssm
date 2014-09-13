@@ -1,12 +1,12 @@
 UniverseMachine
-	State!: message("Running in State")
+	State: min_once message("Running in State")
 		true -> DecisionState
 
-	DecisionState!: message("what a decision!")
+	DecisionState: min_once message("what a decision!")
 		condition()  -> SendMessageState
 		else         -> DeadEnd
 	
-	SendMessageState!: message("I'm in true state")
+	SendMessageState: min_once message("I'm in true state")
 		true -> DeadEnd
 
 	DeadEnd: message("I'm a dead end, quiting")

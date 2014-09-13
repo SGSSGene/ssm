@@ -1,5 +1,5 @@
 UniverseMachine
-	State0!: message("Starte Tests:")
+	State0: min_once message("Starte Tests:")
 		true -> TestBoolean1
 	
 	TestBoolean1:
@@ -30,7 +30,7 @@ UniverseMachine
 
 
 TestBoolean1
-	Start!: message("TestBoolean1: start")
+	Start: min_once message("TestBoolean1: start")
 		true -> T1
 	T1:
 		false -> Error
@@ -56,14 +56,14 @@ TestBoolean1
 	T8:
 		true -> Success
 
-	Error!: message("failed")
+	Error: min_once message("failed")
 		true -> Finish
-	Success!: message("succeeded")
+	Success: min_once message("succeeded")
 		true -> Finish
 	Finish:
 
 TestBoolean2
-	Start!: message("TestBoolean2: start")
+	Start: min_once message("TestBoolean2: start")
 		true -> T1
 	T1:
 		identity(true) -> T2
@@ -86,14 +86,14 @@ TestBoolean2
 	T7:
 		true -> Success
 
-	Error!: message("failed")
+	Error: min_once message("failed")
 		true -> Finish
-	Success!: message("succeeded")
+	Success: min_once message("succeeded")
 		true -> Finish
 	Finish:
 
 TestBoolean3
-	Start!: message("TestBoolean3: start")
+	Start: min_once message("TestBoolean3: start")
 		true -> T1
 	T1:
 		mirror(false).condition_true() -> T2
@@ -118,14 +118,14 @@ TestBoolean3
 	T6:
 		true -> Success
 
-	Error!: message("failed")
+	Error: min_once message("failed")
 		true -> Finish
-	Success!: message("succeeded")
+	Success: min_once message("succeeded")
 		true -> Finish
 	Finish:
 
 TestInteger
-	Start!: message("TestInteger: start")
+	Start: min_once message("TestInteger: start")
 		true -> T1
 	T1:
 		getConst1() != 1 -> Error
@@ -159,14 +159,14 @@ TestInteger
 	T5:
 		true -> Success
 
-	Error!: message("failed")
+	Error: min_once message("failed")
 		true -> Finish
-	Success!: message("succeeded")
+	Success: min_once message("succeeded")
 		true -> Finish
 	Finish:
 
 TestFloat
-	Start!: message("TestFloat: start")
+	Start: min_once message("TestFloat: start")
 		true -> T1
 	T1:
 		getConst1f() != 1. -> Error
@@ -202,14 +202,14 @@ TestFloat
 	T5:
 		true -> Success
 
-	Error!: message("failed")
+	Error: min_once message("failed")
 		true -> Finish
-	Success!: message("succeeded")
+	Success: min_once message("succeeded")
 		true -> Finish
 	Finish:
 
 TestString
-	Start!: message("TestString: start")
+	Start: min_once message("TestString: start")
 		true -> T1
 	T1:
 		getConstString() != "test" -> Error
@@ -229,9 +229,9 @@ TestString
 	T4:
 		true -> Success
 
-	Error!: message("failed")
+	Error: min_once message("failed")
 		true -> Finish
-	Success!: message("succeeded")
+	Success: min_once message("succeeded")
 		true -> Finish
 	Finish:
 

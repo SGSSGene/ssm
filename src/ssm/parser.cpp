@@ -352,8 +352,23 @@ std::tuple<bool, std::string, StateImage> parseStateString(std::string _line) {
 	if (!line.parseWord(true)) return errorResult;
 	stateName = line.getResults().at(0);
 
-	if (line.parseSymbol('!', true)) executeType = StateImage::ExecuteType::MinOnce;
 	if (!line.parseSymbol(':', true)) return errorResult;
+	Line keywordLine(line.getRestLine());
+
+	// This is actually not a while loop, just a if that I wanted to "break"
+	while (keywordLine.parseWord(true)) {
+		if (keywordLine.getResults().at(0) == "any") {
+			executeType = StateImage::ExecuteType::Any;
+		} else if (keywordLine.getResults().at(0) == "once") {
+			executeType = StateImage::ExecuteType::Once;
+		} else if (keywordLine.getResults().at(0) == "max_once") {
+			executeType = StateImage::ExecuteType::MaxOnce;
+		} else if (keywordLine.getResults().at(0) == "min_once") {
+			executeType = StateImage::ExecuteType::MinOnce;
+		} else break;
+		line = Line(keywordLine.getRestLine());
+		break;
+	}
 	if (line.parseFunction(true)) {
 		actionName = line.getResults().at(0);
 	}
