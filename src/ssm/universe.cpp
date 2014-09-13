@@ -39,7 +39,7 @@ Universe::Universe(std::istream& _istream, std::ostream& _ostream) {
 		_ostream<<"subgraph cluster"<<m.first<<" {"<<std::endl;
 
 		_ostream<<"\t\t";
-		_ostream<<"label=\""<<m.first<<"\";"<<std::endl;
+		_ostream<<"graph [label=\""<<m.first<<"\"];"<<std::endl;
 
 		_ostream<<"\t\tmachine_"<<m.first<<"_initialstate [label=\"\", shape=point, style=filled, fillcolor=\"#000000\"];"<<std::endl;
 		_ostream<<"\t\tmachine_"<<m.first<<"_initialstate ->";
@@ -51,16 +51,20 @@ Universe::Universe(std::istream& _istream, std::ostream& _ostream) {
 			_ostream<<"\t\t";
 			std::string executeType;
 			if (s.second.executeType == StateImage::ExecuteType::Any) {
-				executeType == "";
+				executeType = "";
 			} else if (s.second.executeType == StateImage::ExecuteType::Once) {
-				executeType == "once";
+				executeType = "\\n<once>";
 			} else if (s.second.executeType == StateImage::ExecuteType::MaxOnce) {
-				executeType == "max_once";
+				executeType = "\\n<max_once>";
 			} else if (s.second.executeType == StateImage::ExecuteType::MinOnce) {
-				executeType == "min_once";
+				executeType = "\\n<min_once>";
 			}
+			std::string actionString = s.second.function.decoratedFunction;
+			if (actionString != "" ) actionString = "\\n" + actionString;
 
-			_ostream<<"machine_"<<m.first<<"_state_"<<s.first<<" [label=\""<<s.first<<executeType<<"\\n"<<s.second.function.decoratedFunction<<"\"];"<<std::endl;
+			_ostream<<"machine_"<<m.first<<"_state_"<<s.first
+			        <<" [label=\""<<s.first<<executeType<<actionString<<"\""
+			        <<", style=rounded, shape=box];"<<std::endl;
 		}
 		_ostream<<std::endl;
 
