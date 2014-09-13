@@ -16,8 +16,6 @@ namespace SimpleStateMachine {
 class Transition;
 class Machine;
 
-//!TODO something is wrong with the flag fired, it never gets reseted
-//!TODO status ExecuteType is kind of ignored
 class State {
 private:
 	Action action;
@@ -33,7 +31,7 @@ public:
 		return executeType == StateImage::ExecuteType::Once
 		       || executeType == StateImage::ExecuteType::MinOnce;
 	}
-	std::shared_ptr<State> executeStep(bool enter=false);
+	std::shared_ptr<State> executeStep();
 	inline std::vector<Action const*> const& getActionList() const {
 		return actionList;
 	}

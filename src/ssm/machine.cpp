@@ -9,12 +9,10 @@ namespace SimpleStateMachine {
 void Machine::reset() {
 	currentState = initialState;
 	currentState->reset();
-	firstRun = true;
 }
 std::vector<Action const*> const& Machine::_executeStep() {
 	auto oldState = currentState;
-	auto result = currentState->executeStep(firstRun);
-	firstRun = false;
+	auto result = currentState->executeStep();
 	if (result) {
 		currentState = result;
 	}

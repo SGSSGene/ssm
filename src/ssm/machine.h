@@ -19,10 +19,9 @@ private:
 	std::shared_ptr<State> currentState;
 	std::shared_ptr<State> initialState;
 
-	bool firstRun;
-
 	std::vector<Action const*> const& _executeStep();
-friend class State; // So it can call _executeStep()
+	friend class State; // So State can call _executeStep()
+
 public:
 	void reset();
 	void doTransition();

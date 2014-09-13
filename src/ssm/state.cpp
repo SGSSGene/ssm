@@ -11,7 +11,7 @@ void State::reset() {
 	fired = false;
 }
 
-std::shared_ptr<State> State::executeStep(bool enter) {
+std::shared_ptr<State> State::executeStep() {
 	actionList.clear();
 
 	for (auto const& machine : machineSet) {
@@ -23,11 +23,12 @@ std::shared_ptr<State> State::executeStep(bool enter) {
 		}
 	}
 
-	if (!enter || !forceOneExecutionStep()) {
+	if (fired || !forceOneExecutionStep()) {
 		for (auto const& transition : transitionSet) {
 			if (transition->isEnabled()) {
 				auto targetState(transition->getTargetState().lock());
-				auto result(targetState->executeStep(true));
+				targetState->reset();
+				auto result(targetState->executeStep());
 				actionList = targetState->getActionList();
 				if (result) {
 					return result;
@@ -36,9 +37,11 @@ std::shared_ptr<State> State::executeStep(bool enter) {
 			}
 		}
 	}
-	if (!forceOneExecutionStep() || !fired) {
+	if (!fired
+	    || executeType == StateImage::ExecuteType::Any
+	    || executeType == StateImage::ExecuteType::MinOnce) {
 		actionList.insert(actionList.begin(), &action);
-		fired = false;
+		fired = true;
 	}
 	return std::shared_ptr<State>();
 }
