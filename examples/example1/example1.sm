@@ -1,0 +1,4 @@
+MyStateMachine
+	MyStateStart: once helloWorld()
+		true -> MyStateFinish
+	MyStateFinish:
