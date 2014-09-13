@@ -23,7 +23,7 @@ std::shared_ptr<State> State::executeStep(bool enter) {
 		}
 	}
 
-	if (!enter || !force) {
+	if (!enter || !forceOneExecutionStep()) {
 		for (auto const& transition : transitionSet) {
 			if (transition->isEnabled()) {
 				auto targetState(transition->getTargetState().lock());
@@ -36,7 +36,7 @@ std::shared_ptr<State> State::executeStep(bool enter) {
 			}
 		}
 	}
-	if (!force || !fired) {
+	if (!forceOneExecutionStep() || !fired) {
 		actionList.insert(actionList.begin(), &action);
 		fired = false;
 	}

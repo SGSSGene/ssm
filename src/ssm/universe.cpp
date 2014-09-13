@@ -49,7 +49,18 @@ Universe::Universe(std::istream& _istream, std::ostream& _ostream) {
 		//print all states
 		for (auto s : m.second.stateImageMap) {
 			_ostream<<"\t\t";
-			_ostream<<"machine_"<<m.first<<"_state_"<<s.first<<" [label=\""<<s.first<<(s.second.force?"!":"")<<"\\n"<<s.second.function.decoratedFunction<<"\"];"<<std::endl;
+			std::string executeType;
+			if (s.second.executeType == StateImage::ExecuteType::Any) {
+				executeType == "";
+			} else if (s.second.executeType == StateImage::ExecuteType::Once) {
+				executeType == "once";
+			} else if (s.second.executeType == StateImage::ExecuteType::MaxOnce) {
+				executeType == "max_once";
+			} else if (s.second.executeType == StateImage::ExecuteType::MinOnce) {
+				executeType == "min_once";
+			}
+
+			_ostream<<"machine_"<<m.first<<"_state_"<<s.first<<" [label=\""<<s.first<<executeType<<"\\n"<<s.second.function.decoratedFunction<<"\"];"<<std::endl;
 		}
 		_ostream<<std::endl;
 
@@ -243,7 +254,7 @@ std::shared_ptr<Machine> Universe::bootstrap(UniverseImage const& _universeImage
 		}
 
 		state->action = _actionParaMap.at(actionName)(stateImage.second.function.parameters);
-		state->force  = stateImage.second.force;
+		state->executeType = stateImage.second.executeType;
 		machine->stateMap[stateImage.first] = std::shared_ptr<State>(state);
 	}
 	// set Initial State

@@ -2,6 +2,7 @@
 #define SIMPLESTATEMACHINE_STATE_H
 
 #include <ssm/action.h>
+#include <ssm/universeImage.h>
 
 #include <list>
 #include <memory>
@@ -15,10 +16,12 @@ namespace SimpleStateMachine {
 class Transition;
 class Machine;
 
+//!TODO something is wrong with the flag fired, it never gets reseted
+//!TODO status ExecuteType is kind of ignored
 class State {
 private:
 	Action action;
-	bool force;
+	StateImage::ExecuteType executeType;
 	bool fired;
 	std::vector<std::shared_ptr<Transition>> transitionSet;
 	std::vector<std::shared_ptr<Machine>>    machineSet;
@@ -27,7 +30,8 @@ private:
 public:
 	void reset();
 	inline bool forceOneExecutionStep() const {
-		return force;
+		return executeType == StateImage::ExecuteType::Once
+		       || executeType == StateImage::ExecuteType::MinOnce;
 	}
 	std::shared_ptr<State> executeStep(bool enter=false);
 	inline std::vector<Action const*> const& getActionList() const {

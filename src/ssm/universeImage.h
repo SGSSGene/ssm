@@ -108,14 +108,25 @@ struct TransitionImage {
 struct StateImage {
 	FunctionImage function;
 
-	bool        force;
+	enum class ExecuteType { Any, Once, MaxOnce, MinOnce };
+	ExecuteType executeType;
+
 	std::vector<TransitionImage> transitionSet;
 	std::vector<std::string>     machineNameSet;
 	void stream(std::ostream& os, std::string tabs) const {
 		std::string tab2 = tabs+"\t";
 		os<<tabs<<"{ // State Image\n";
 		function.stream(os, tab2); os <<",\n";
-		os<<tab2<<(force?"true":"false")<<",\n";
+
+		if (executeType == ExecuteType::Any) {
+			os<<tab2<<"SimpleStateMachine::StateImage::ExecuteType::Any"<<",\n";
+		} else if (executeType == ExecuteType::Once) {
+			os<<tab2<<"SimpleStateMachine::StateImage::ExecuteType::Once"<<",\n";
+		} else if (executeType == ExecuteType::MaxOnce) {
+			os<<tab2<<"SimpleStateMachine::StateImage::ExecuteType::MaxOnce"<<",\n";
+		} else if (executeType == ExecuteType::MinOnce) {
+			os<<tab2<<"SimpleStateMachine::StateImage::ExecuteType::MinOnce"<<",\n";
+		}
 
 		os<<tab2<<"{ // TransitionList\n";
 		for (auto t : transitionSet) {

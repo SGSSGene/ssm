@@ -345,14 +345,14 @@ std::tuple<bool, std::string, StateImage> parseStateString(std::string _line) {
 	if (!line.parseSymbol('\t')) return errorResult;
 
 	std::string stateName;
-	bool force = false;
+	StateImage::ExecuteType executeType = StateImage::ExecuteType::Any;
 	std::string actionName;
 	FunctionImage functionImage;
 
 	if (!line.parseWord(true)) return errorResult;
 	stateName = line.getResults().at(0);
 
-	if (line.parseSymbol('!', true)) force = true;
+	if (line.parseSymbol('!', true)) executeType = StateImage::ExecuteType::MinOnce;
 	if (!line.parseSymbol(':', true)) return errorResult;
 	if (line.parseFunction(true)) {
 		actionName = line.getResults().at(0);
@@ -375,7 +375,7 @@ std::tuple<bool, std::string, StateImage> parseStateString(std::string _line) {
 	functionImage.broadSignature = "void, "+functionImage.signature;
 	functionImage.signature = "void(" + functionImage.signature + ")";
 
-	StateImage stateImage {functionImage, force, {}, {}};
+	StateImage stateImage {functionImage, executeType, {}, {}};
 	return std::make_tuple(true, stateName, stateImage);
 }
 
