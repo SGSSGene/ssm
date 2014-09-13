@@ -1,4 +1,4 @@
-#include "example1.sm.h"
+#include "example2.sm.h"
 
 class Module1 {
 public:
