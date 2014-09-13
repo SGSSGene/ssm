@@ -18,6 +18,7 @@ ssm-lib: src/ssm/*
 	    src/ssm/machine.cpp \
 	    src/ssm/state.cpp \
 	    src/ssm/universe.cpp \
+	    src/ssm/parser.cpp \
 	    -o libssm.so
 
 install: all
