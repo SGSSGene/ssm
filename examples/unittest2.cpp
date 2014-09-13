@@ -1,5 +1,6 @@
 #include "unittest1.sm.h"
 
+#include <cmath>
 #include <chrono>
 
 class GeneralTest {
@@ -28,6 +29,14 @@ public:
 	bool is1(int i) { return i == 1; }
 	int keepSign(int i, bool b) { return b?i:std::abs(i); }
 };
+class FloatTest {
+public:
+	double getConst1f() { return 1.;	}
+	double getConst2f() { return 2.; }
+	bool is1f(double f) { return f == 1.; }
+		double keepSignf(double f, bool b) { return b?f:std::abs(f); }
+};
+
 class StringTest {
 public:
 	std::string getConstString() { return "test"; }
@@ -39,9 +48,10 @@ int main(int, char**) {
 	GeneralTest c1;
 	BooleanTest c2;
 	IntegerTest c3;
-	StringTest  c4;
+	FloatTest   c4;
+	StringTest  c5;
 
-	Unittest1 machine(std::make_tuple(&c1, &c2, &c3, &c4));
+	Unittest1 machine(std::make_tuple(&c1, &c2, &c3, &c4, &c5));
 
 	machine.run();
 

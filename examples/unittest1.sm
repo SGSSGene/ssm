@@ -15,8 +15,11 @@ UniverseMachine
 		* TestBoolean3
 	
 	TestInteger:
-		TestInteger.Finish -> TestString
+		TestInteger.Finish -> TestFloat
 		* TestInteger
+	TestFloat:
+		TestFloat.Finish   -> TestString
+		* TestFloat
 
 	TestString:
 		TestString.Finish -> Finish
@@ -162,6 +165,48 @@ TestInteger
 		true -> Finish
 	Finish:
 
+TestFloat
+	Start!: message("TestFloat: start")
+		true -> T1
+	T1:
+		getConst1f() != 1. -> Error
+		getConst1f() == .1 -> Error
+		getConst2f() == 1. -> Error
+		getConst2f() != 2. -> Error
+		getConst1f() == .1 -> Error
+		getConst2f() == .2 -> Error
+		getConst2f() <= 1. -> Error
+		getConst2f() <  2. -> Error
+		getConst2f() <  1. -> Error
+		getConst2f() >  2. -> Error
+		getConst2f() >  3. -> Error
+		getConst2f() >= 3. -> Error
+		getConst1f() == 1. -> T2
+		else -> Error
+
+	T2:
+		getConst1f() == -1. -> Error
+		getConst1f() <  -0.1 -> Error
+		getConst1f() != -1. -> T3
+		else -> Error
+
+	T3:
+		is1f(2.) -> Error
+		is1f(1.) -> T4
+		else   -> Error
+
+	T4:
+		keepSignf(-5., true) != -5. -> Error
+		keepSignf(-5., false) != 5. -> Error
+		keepSignf(-5., false) == 5. -> T5
+	T5:
+		true -> Success
+
+	Error!: message("failed")
+		true -> Finish
+	Success!: message("succeeded")
+		true -> Finish
+	Finish:
 
 TestString
 	Start!: message("TestString: start")

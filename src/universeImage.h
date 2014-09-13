@@ -12,13 +12,15 @@
 
 namespace SimpleStateMachine {
 
+
 struct ParameterImage {
 	bool v_b;
 	int v_i;
+	double v_f;
 	std::string v_s;
 
 	void stream(std::ostream& os, std::string tabs) const {
-		os<<tabs<<"{ "<<(v_b?"true":"false")<<", "<<v_i<<", std::string(\""<<v_s<<"\") }";
+		os<<tabs<<"{ "<<(v_b?"true":"false")<<", "<<v_i<<", "<<v_f<<", std::string(\""<<v_s<<"\") }";
 	}
 
 	template<class T> T getValue() const;
@@ -30,6 +32,10 @@ inline bool ParameterImage::getValue() const {
 template<>
 inline int ParameterImage::getValue() const {
 	return v_i;
+}
+template<>
+inline double ParameterImage::getValue() const {
+	return v_f;
 }
 template<>
 inline std::string ParameterImage::getValue() const {
@@ -69,7 +75,7 @@ struct TransitionImage {
 	FunctionImage functionImage;
 	std::string targetState;
 
-	enum DataType { Boolean, Integer, String };
+	enum DataType { Boolean, Integer, Float, String };
 	DataType dataType;
 
 	enum class Compare { Equal, Unequal, LessEqual, GreaterEqual, Less, Greater };
@@ -84,6 +90,7 @@ struct TransitionImage {
 		os<<tab2<<"std::string(\""<<targetState<<"\"), ";
 		if (dataType == DataType::Boolean) os<<"SimpleStateMachine::TransitionImage::DataType::Boolean";
 		else if (dataType == DataType::Integer) os<<"SimpleStateMachine::TransitionImage::DataType::Integer";
+		else if (dataType == DataType::Float) os<<"SimpleStateMachine::TransitionImage::DataType::Float";
 		else if (dataType == DataType::String) os<<"SimpleStateMachine::TransitionImage::DataType::String";
 		os<<", ";
 		if (compareSymbol == Compare::Equal) os<<"SimpleStateMachine::TransitionImage::Compare::Equal";

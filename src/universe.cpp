@@ -108,6 +108,8 @@ public:
 		if (!std::isdigit(noSign.at(0))) return false;
 
 		for (auto c : noSign) {
+//!TODO Hack to detect floats
+			if (c == '.') return false;
 			if (!std::isdigit(c)) break;
 			retStr += _line.parseAnySymbol();
 		}
@@ -115,6 +117,46 @@ public:
 		line = _line.getRestLine();
 		results.clear();
 		results.push_back(retStr);
+		if (whitespaces) parseWhiteSpace();
+		return true;
+
+	}
+	bool parseFloat(bool whitespaces=false) {
+		std::string retStr = "";
+		Line _line(line);
+		std::string noSign = line;
+		if (_line.parseSymbol('+', true))
+			noSign = _line.getRestLine();
+		else if (_line.parseSymbol('-', true)) {
+			noSign = _line.getRestLine();
+			retStr += '-';
+		}
+
+		if (noSign.size() <= 0) return false;
+		if (!std::isdigit(noSign.at(0)) && (retStr == "-" || noSign.at(0) != '.') ) return false;
+
+		std::string beforeStr, afterStr;
+		bool before = true;
+		for (auto c : noSign) {
+			if (c == '.' && before) {
+				before = false;
+				_line.parseAnySymbol();
+				continue;
+			} else if (c == '.' && !before) {
+				return false;
+			}
+
+			if (!std::isdigit(c)) break;
+			if (before) beforeStr += _line.parseAnySymbol();
+			else        afterStr  += _line.parseAnySymbol();
+		}
+
+		if (before) return false;
+		if (beforeStr == "" && afterStr == "") return false;
+
+		line = _line.getRestLine();
+		results.clear();
+		results.push_back(retStr + beforeStr + "." + afterStr);
 		if (whitespaces) parseWhiteSpace();
 		return true;
 
@@ -141,9 +183,9 @@ public:
 		if (_line.parseParameterCall(true)) {
 			std::string call = _line.getResults().at(0);
 			Line callLine(call);
-			if (!(callLine.isEmpty() || callLine.parseBool(true) || callLine.parseInteger(true) || callLine.parseString(true))) return false;
+			if (!(callLine.isEmpty() || callLine.parseBool(true) || callLine.parseInteger(true) || callLine.parseFloat(true) || callLine.parseString(true))) return false;
 			while (callLine.parseSymbol(',', true)) {
-				if (!(callLine.parseBool(true) || callLine.parseInteger(true) || callLine.parseString(true))) return false;
+				if (!(callLine.parseBool(true) || callLine.parseInteger(true) || callLine.parseFloat(true) || callLine.parseString(true))) return false;
 			}
 			retStr += "(" +  call + ")";
 		}
@@ -212,6 +254,11 @@ FunctionImage parseFunctionString(std::string _line, int callNr=0) {
 			} else if (para.parseInteger(true)) {
 				std::istringstream ( para.getResults().at(0) ) >> parameter.v_i;
 				f.signature += "int, ";
+
+				f.decoratedFunction += para.getResults().at(0);
+			} else if (para.parseFloat(true)) {
+				std::istringstream ( para.getResults().at(0) ) >> parameter.v_f;
+				f.signature += "double, ";
 
 				f.decoratedFunction += para.getResults().at(0);
 			} else if (para.parseString(true)) {
@@ -332,10 +379,13 @@ std::tuple<bool, TransitionImage> parseTransitionString(std::string _line) {
 		if (line.parseString(true)) {
 			compareValue = line.getResults().at(0);
 			returnType = "std::string";
+		} else if (line.parseFloat(true)) {
+			compareValue = line.getResults().at(0);
+			returnType = "double";
 		} else if (line.parseInteger(true)) {
 			compareValue = line.getResults().at(0);
 			returnType = "int";
-			} else if (line.parseBool(true)) {
+		} else if (line.parseBool(true)) {
 			compareValue = line.getResults().at(0);
 			returnType = "bool";
 		} else return errorResult;
@@ -345,6 +395,9 @@ std::tuple<bool, TransitionImage> parseTransitionString(std::string _line) {
 		if (line.parseString(true)) {
 			compareValue = line.getResults().at(0);
 			returnType = "std::string";
+		} else if (line.parseFloat(true)) {
+			compareValue = line.getResults().at(0);
+			returnType = "double";
 		} else if (line.parseInteger(true)) {
 			compareValue = line.getResults().at(0);
 			returnType = "int";
@@ -358,7 +411,11 @@ std::tuple<bool, TransitionImage> parseTransitionString(std::string _line) {
 	                       || line.parseSymbols(">", true)
 	                       || line.parseSymbols("<", true))) {
 		auto _compareSymbol = line.getResults().at(0);
-		if (line.parseInteger(true)) {
+		if (line.parseFloat(true)) {
+			compareValue = line.getResults().at(0);
+			functionImage.decoratedFunction += " " + _compareSymbol + " " +line.getResults().at(0);
+			returnType = "double";
+		} else if (line.parseInteger(true)) {
 			compareValue = line.getResults().at(0);
 			functionImage.decoratedFunction += " " + _compareSymbol + " " + line.getResults().at(0);
 			returnType = "int";

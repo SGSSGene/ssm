@@ -1,5 +1,6 @@
 #include "simpleStateMachine.h"
 
+#include <cmath>
 #include <chrono>
 
 DEF_GET_METHOD_CALL(message, message(get<0>(p)), void, std::string);
@@ -16,6 +17,10 @@ DEF_GET_METHOD_CALL(getConst1, getConst1(), int);
 DEF_GET_METHOD_CALL(getConst2, getConst2(), int);
 DEF_GET_METHOD_CALL(is1, is1(std::get<0>(p)), bool, int);
 DEF_GET_METHOD_CALL(keepSign, keepSign(get<0>(p), get<1>(p)), int, int, bool);
+DEF_GET_METHOD_CALL(getConst1f, getConst1f(), double);
+DEF_GET_METHOD_CALL(getConst2f, getConst2f(), double);
+DEF_GET_METHOD_CALL(is1f, is1f(std::get<0>(p)), bool, double);
+DEF_GET_METHOD_CALL(keepSignf, keepSignf(get<0>(p), get<1>(p)), double, double, bool);
 DEF_GET_METHOD_CALL(getConstString, getConstString(), std::string);
 DEF_GET_METHOD_CALL(isStringTest, isStringTest(get<0>(p)), bool, std::string);
 DEF_GET_METHOD_CALL(copyString,   copyString(get<0>(p)), std::string, std::string);
@@ -37,6 +42,10 @@ DEF_AUTO_REGISTER_BEGIN
 	DEF_AUTO_REGISTER_CONDITION(getConst2)
 	DEF_AUTO_REGISTER_CONDITION(is1)
 	DEF_AUTO_REGISTER_CONDITION(keepSign)
+	DEF_AUTO_REGISTER_CONDITION(getConst1f)
+	DEF_AUTO_REGISTER_CONDITION(getConst2f)
+	DEF_AUTO_REGISTER_CONDITION(is1f)
+	DEF_AUTO_REGISTER_CONDITION(keepSignf)
 	DEF_AUTO_REGISTER_CONDITION(getConstString)
 	DEF_AUTO_REGISTER_CONDITION(isStringTest)
 	DEF_AUTO_REGISTER_CONDITION(copyString)
@@ -69,6 +78,14 @@ public:
 	bool is1(int i) { return i == 1; }
 	int keepSign(int i, bool b) { return b?i:std::abs(i); }
 };
+class FloatTest {
+public:
+	double getConst1f() { return 1.;	}
+	double getConst2f() { return 2.; }
+	bool is1f(double f) { return f == 1.; }
+	double keepSignf(double f, bool b) { return b?f:std::abs(f); }
+};
+
 class StringTest {
 public:
 	std::string getConstString() { return "test"; }
@@ -82,11 +99,13 @@ int main(int, char**) {
 	GeneralTest c1;
 	BooleanTest c2;
 	IntegerTest c3;
-	StringTest  c4;
+	FloatTest   c4;
+	StringTest  c5;
 	uni.autoRegister(&c1);
 	uni.autoRegister(&c2);
 	uni.autoRegister(&c3);
 	uni.autoRegister(&c4);
+	uni.autoRegister(&c5);
 
 	auto machine = uni.bootstrap("unittest1.sm");
 	std::cout<<uni.getErrorMessages();

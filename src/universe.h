@@ -151,6 +151,27 @@ static delegate<bool(int)> getCheck(TransitionImage const& t) {
 	return [value](int i) { return i != value; };
 }
 };
+template<>
+struct Check<double> {
+static delegate<bool(double)> getCheck(TransitionImage const& t) {
+	// ASSERT if wrong type
+
+	double value;
+	std::istringstream (t.compareValue) >> value;
+	if (t.compareSymbol == TransitionImage::Compare::Equal) {
+		return [value](double f) { return f == value; };
+	} else if (t.compareSymbol == TransitionImage::Compare::Greater) {
+		return [value](double f) { return f > value; };
+	} else if (t.compareSymbol == TransitionImage::Compare::GreaterEqual) {
+		return [value](double f) { return f >= value; };
+	} else if (t.compareSymbol == TransitionImage::Compare::Less) {
+		return [value](double f) { return f < value; };
+	} else if (t.compareSymbol == TransitionImage::Compare::LessEqual) {
+		return [value](double f) { return f <= value; };
+	}
+	return [value](double f) { return f != value; };
+}
+};
 
 template<>
 struct Check<std::string> {
