@@ -147,26 +147,63 @@ int main(int argc, char** args) {
 		if (option == "--dot") {
 			std::string machineName = args[2];
 			std::stringstream ssi;
+
+			if (machineName.size() >= 3
+				&& machineName.substr(machineName.size()-3, 3) == ".sm") {
+				machineName = machineName.substr(0, machineName.size()-3);
+			}
+
 			ssi<<machineName<<".sm";
 			std::ifstream fin(ssi.str());
+
+			if (!fin.is_open()) {
+				std::cerr<<"Couldn\'t open file"<<std::endl;
+				return 1;
+			}
 			dotGenerator(fin, std::cout);
 
 			return 0;
 		} else if (option == "--requirements" && argc >= 3) {
 			std::string machineName = args[2];
 			std::stringstream ssi;
+			if (machineName.size() >= 3
+				&& machineName.substr(machineName.size()-3, 3) == ".sm") {
+				machineName = machineName.substr(0, machineName.size()-3);
+			}
 			ssi<<machineName<<".sm";
 
 			std::ifstream fin(ssi.str());
+
+			if (!fin.is_open()) {
+				std::cerr<<"Couldn\'t open file"<<std::endl;
+				return 1;
+			}
 			generateListOfRequirements(fin);
 			return 0;
 		} else if (option =="--c++11" && argc >= 3) {
 			std::string machineName = args[2];
+
+			if (machineName.size() >= 3
+				&& machineName.substr(machineName.size()-3, 3) == ".sm") {
+				machineName = machineName.substr(0, machineName.size()-3);
+			}
+
 			std::stringstream sso, ssi;
 			sso<<machineName<<".sm.h";
 			ssi<<machineName<<".sm";
 			std::ofstream fout(sso.str());
 			std::ifstream fin(ssi.str());
+
+			if (!fin.is_open()) {
+				std::cerr<<"Couldn\'t open file"<<std::endl;
+				return 1;
+			}
+			if (!fout.is_open()) {
+				std::cerr<<"Couldn\'t open file"<<std::endl;
+				return 1;
+			}
+
+
 			c__11Generator(fin, fout, machineName);
 			return 0;
 		}
