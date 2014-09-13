@@ -1,4 +1,4 @@
-#include "simpleStateMachine.h"
+#include <ssm/simpleStateMachine.h>
 
 #include <cmath>
 #include <chrono>

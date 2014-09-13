@@ -1,7 +1,7 @@
 #ifndef SIMPLESTATEMACHINE_CONDITION_H
 #define SIMPLESTATEMACHINE_CONDITION_H
 
-#include "delegate.h"
+#include <ssm/delegate.h>
 #include <functional>
 #include <map>
 #include <string>

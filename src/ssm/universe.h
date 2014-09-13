@@ -2,10 +2,10 @@
 #define SIMPLESTATEMACHINE_UNIVERSE_H
 
 
-#include "state.h"
-#include "transition.h"
-#include "machine.h"
-#include "universeImage.h"
+#include <ssm/state.h>
+#include <ssm/transition.h>
+#include <ssm/machine.h>
+#include <ssm/universeImage.h>
 
 #include <sstream>
 #include <iostream>

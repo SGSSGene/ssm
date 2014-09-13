@@ -1,10 +1,7 @@
 #ifndef SIMPLESTATEMACHINE_STATE_H
 #define SIMPLESTATEMACHINE_STATE_H
 
-#include "action.h"
-
-#include "action.h"
-#include "time.h"
+#include <ssm/action.h>
 
 #include <list>
 #include <memory>

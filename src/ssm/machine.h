@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "action.h"
+#include <ssm/action.h>
 
 namespace SimpleStateMachine {
 

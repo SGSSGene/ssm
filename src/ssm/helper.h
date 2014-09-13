@@ -1,7 +1,7 @@
 #ifndef SIMPLESTATEMACHINE_HELPER
 #define SIMPLESTATEMACHINE_HELPER
 
-#include "universe.h"
+#include <ssm/universe.h>
 
 namespace SimpleStateMachine {
 
