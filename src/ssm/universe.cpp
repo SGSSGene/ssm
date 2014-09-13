@@ -33,6 +33,9 @@ Universe::Universe(std::istream& _istream, std::ostream& _ostream) {
 	UniverseImage universeImage = parse(_istream);
 	extractAllRequirements(universeImage);
 	_ostream << "digraph {" << std::endl;
+	_ostream << "\tnode [ fontsize=13 ];\n";
+	_ostream << "\tedge [ fontsize=12 ];\n";
+
 	// print all machines
 	for (auto m : universeImage) {
 		_ostream<<"\t";
