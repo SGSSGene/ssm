@@ -121,7 +121,7 @@ static delegate<bool(R)> getCheck(TransitionImage const& t);
 template<>
 struct Check<bool> {
 static delegate<bool(bool)> getCheck(TransitionImage const& t) {
-	// ASSERT if wrong type
+//!TODO ASSERT if wrong type
 
 	bool value = (t.compareValue=="true");
 	if (t.compareSymbol == TransitionImage::Compare::Equal) {
@@ -133,7 +133,7 @@ static delegate<bool(bool)> getCheck(TransitionImage const& t) {
 template<>
 struct Check<int> {
 static delegate<bool(int)> getCheck(TransitionImage const& t) {
-	// ASSERT if wrong type
+//!TODO ASSERT if wrong type
 
 	int value;
 	std::istringstream (t.compareValue) >> value;
@@ -154,7 +154,7 @@ static delegate<bool(int)> getCheck(TransitionImage const& t) {
 template<>
 struct Check<double> {
 static delegate<bool(double)> getCheck(TransitionImage const& t) {
-	// ASSERT if wrong type
+//!TODO ASSERT if wrong type
 
 	double value;
 	std::istringstream (t.compareValue) >> value;
@@ -176,7 +176,7 @@ static delegate<bool(double)> getCheck(TransitionImage const& t) {
 template<>
 struct Check<std::string> {
 static delegate<bool(std::string)> getCheck(TransitionImage const& t) {
-	// ASSERT if wrong type
+//!TODO ASSERT if wrong type
 	std::string value = t.compareValue;
 	if (t.compareSymbol == TransitionImage::Compare::Equal) {
 		return [value](std::string s) { return s == value; };
