@@ -1,7 +1,8 @@
-#include "unittest1.sm.h"
+#include "unittest.sm.h"
 
 #include <cmath>
 #include <chrono>
+#include <iostream>
 
 class GeneralTest {
 public:
@@ -51,7 +52,14 @@ int main(int, char**) {
 	FloatTest   c4;
 	StringTest  c5;
 
-	Unittest1 machine(std::make_tuple(&c1, &c2, &c3, &c4, &c5));
+	Unittest machine(std::make_tuple(&c1, &c2, &c3, &c4, &c5));
+
+	if (machine.getUnmatchedSymbols().size() > 0) {
+		for (auto const& s : machine.getUnmatchedSymbols()) {
+			std::cout<<"unmatched symbols: "<<s<<std::endl;
+		}
+		return 1;
+	}
 
 	machine.run();
 

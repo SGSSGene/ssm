@@ -1,3 +1,5 @@
+export Unittest
+
 UniverseMachine
 	State0: min_once message("Starte Tests:")
 		true -> TestBoolean1
@@ -26,8 +28,9 @@ UniverseMachine
 		* TestString
 
 
-	Finish: message("finished all tests")
-
+	Finish: once message("finished all tests")
+		true -> TERM
+	TERM:
 
 TestBoolean1
 	Start: min_once message("TestBoolean1: start")

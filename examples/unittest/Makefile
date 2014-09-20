@@ -1,25 +1,15 @@
-all: unittest1 unittest2
+all: unittest
 
-unittest1: unittest1.cpp unittest1.sm
+unittest: unittest.cpp unittest.sm
+	../../ssm.pl -i '"../../include/ssm.h"' --cpp11 unittest.sm
 	g++ -std=c++11 -O3 \
-	    -o unittest1 \
-	    unittest1.cpp \
-	    -lssm
+	    -o unittest \
+	    unittest.cpp \
 
-unittest2: unittest2.cpp unittest1.sm
-	ssm --c++11 unittest1
-	g++ -std=c++11 -O3 \
-	    -o unittest2 \
-	    unittest2.cpp \
-	    -lssm
-
-run:
-	./unittest1
-	./unittest2
+run: unittest
+	./unittest
 
 clean:
-	rm -f unittest1
-	rm -f unittest2
-	rm -f unittest1.sm.h
-	rm -f unittest2.sm.h
+	rm -f unittest
+	rm -f unittest.sm.h
 
