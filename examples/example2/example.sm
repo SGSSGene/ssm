@@ -1,4 +1,6 @@
-UniverseMachine
+export MyStateMachine
+
+MyStateMachine
 	State: min_once message("Running in State")
 		true -> DecisionState
 

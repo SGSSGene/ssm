@@ -1,6 +1,6 @@
-#include "example2.sm.h"
+#include "example.sm.h"
 
-class Module1 {
+class Module {
 public:
 	bool condition() {
 		return false;
@@ -12,11 +12,10 @@ public:
 
 
 int main(int, char**) {
-	Module1 m1;
+	Module module;
 
-	Example1 machine1(std::make_tuple(&m1));
-	machine1.run();
-
+	MyStateMachine machine(std::make_tuple(&module));
+	machine.run();
 
 	return 0;
 }
