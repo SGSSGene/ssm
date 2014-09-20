@@ -17,20 +17,22 @@ UnittestMachine
 		* TestBooleanMachine3
 	
 	TestInteger:
-		TestIntegerMachine.Finish -> TestFloat
+		TestIntegerMachine.Finish  -> TestFloat
 		* TestIntegerMachine
+
 	TestFloat:
-		TestFloatMachine.Finish   -> TestString
+		TestFloatMachine.Finish    -> TestChar
 		* TestFloatMachine
 
+	TestChar:
+		TestCharMachine.Finish     -> TestString
+		* TestCharMachine
+
 	TestString:
-		TestStringMachine.Finish -> Finish
+		TestStringMachine.Finish   -> Finish
 		* TestStringMachine
 
-
 	Finish: once message("finished all tests")
-		true -> TERM
-	TERM:
 
 TestBooleanMachine1
 	Start: min_once message("TestBoolean1: start")
@@ -203,6 +205,31 @@ TestFloatMachine
 		keepSignf(-5., false) != 5. -> Error
 		keepSignf(-5., false) == 5. -> T5
 	T5:
+		true -> Success
+
+	Error: min_once message("failed")
+		true -> Finish
+	Success: min_once message("succeeded")
+		true -> Finish
+	Finish:
+
+TestCharMachine
+	Start: min_once message("TestChar: start")
+		true -> T1
+	T1:
+		getConstChar() != 'c' -> Error
+		getConstChar() == 'c' -> T2
+	T2:
+		getConstChar() >  'c' -> Error
+		getConstChar() <  'c' -> Error
+		getConstChar() == 'b' -> Error
+		getConstChar() <  'b' -> Error
+		getConstChar() == 'c' -> T3
+	T3:
+		!isConstChar('c') -> Error
+		isConstChar('d')  -> Error
+		isConstChar('c')  -> T4
+	T4:
 		true -> Success
 
 	Error: min_once message("failed")

@@ -37,6 +37,11 @@ public:
 	bool is1f(double f) { return f == 1.; }
 		double keepSignf(double f, bool b) { return b?f:std::abs(f); }
 };
+class CharTest {
+public:
+	char getConstChar() { return 'c'; }
+	bool isConstChar(char c) { return c == 'c'; }
+};
 
 class StringTest {
 public:
@@ -50,9 +55,10 @@ int main(int, char**) {
 	BooleanTest c2;
 	IntegerTest c3;
 	FloatTest   c4;
-	StringTest  c5;
+	CharTest    c5;
+	StringTest  c6;
 
-	Unittest machine(std::make_tuple(&c1, &c2, &c3, &c4, &c5));
+	Unittest machine(std::make_tuple(&c1, &c2, &c3, &c4, &c5, &c6));
 
 	if (machine.getUnmatchedSymbols().size() > 0) {
 		for (auto const& s : machine.getUnmatchedSymbols()) {
