@@ -14,7 +14,7 @@ public:
 int main(int, char**) {
 	Module module;
 
-	MyStateMachine machine(std::make_tuple(&module));
+	MyStateMachine machine(&module);
 	machine.run();
 
 	return 0;

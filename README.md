@@ -37,7 +37,7 @@ To use it with our state machine *example1.sm*. We first run `./ssm.pl --cpp11 e
 ...
 	MyClass myClass;
 
-	CPPMachine example1(std::make_tuple(&myClass));
+	CPPMachine example1(&myClass);
 	example1.run();
 ```
 

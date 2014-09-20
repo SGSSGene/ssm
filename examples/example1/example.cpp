@@ -14,12 +14,9 @@ int main(int argc, char** args) {
 	// Create instacne of MyClass
 	MyClass myClass;
 
-	// Create tuple of all objects that we want our state machine to use
-	auto objects = std::make_tuple(&myClass);
-
 	// Create instance of our state machine. Example1 is provided by example.sm.h
-	// As an argument it wants a tuple with objects that should be used by the state machine
-	MyStateMachine machine(objects);
+	// As an argument it wants the object that should be used by the state machine
+	MyStateMachine machine(&myClass);
 
 	// run the state machine
 	machine.run();
