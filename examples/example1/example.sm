@@ -1,3 +1,6 @@
+ # This is the c++ class name of the first declared Machinename
+export MyStateMachine
+
 MyStateMachine
 	MyStateStart: once helloWorld()
 		true -> MyStateFinish
