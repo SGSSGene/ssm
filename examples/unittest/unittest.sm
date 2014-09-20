@@ -1,38 +1,38 @@
 export Unittest
 
-UniverseMachine
+UnittestMachine
 	State0: min_once message("Starte Tests:")
 		true -> TestBoolean1
 	
 	TestBoolean1:
-		TestBoolean1.Finish -> TestBoolean2
-		* TestBoolean1
+		TestBooleanMachine1.Finish -> TestBoolean2
+		* TestBooleanMachine1
 
 	TestBoolean2:
-		TestBoolean2.Finish -> TestBoolean3
-		* TestBoolean2
+		TestBooleanMachine2.Finish -> TestBoolean3
+		* TestBooleanMachine2
 	
 	TestBoolean3:
-		TestBoolean3.Finish -> TestInteger
-		* TestBoolean3
+		TestBooleanMachine3.Finish -> TestInteger
+		* TestBooleanMachine3
 	
 	TestInteger:
-		TestInteger.Finish -> TestFloat
-		* TestInteger
+		TestIntegerMachine.Finish -> TestFloat
+		* TestIntegerMachine
 	TestFloat:
-		TestFloat.Finish   -> TestString
-		* TestFloat
+		TestFloatMachine.Finish   -> TestString
+		* TestFloatMachine
 
 	TestString:
-		TestString.Finish -> Finish
-		* TestString
+		TestStringMachine.Finish -> Finish
+		* TestStringMachine
 
 
 	Finish: once message("finished all tests")
 		true -> TERM
 	TERM:
 
-TestBoolean1
+TestBooleanMachine1
 	Start: min_once message("TestBoolean1: start")
 		true -> T1
 	T1:
@@ -65,7 +65,7 @@ TestBoolean1
 		true -> Finish
 	Finish:
 
-TestBoolean2
+TestBooleanMachine2
 	Start: min_once message("TestBoolean2: start")
 		true -> T1
 	T1:
@@ -95,7 +95,7 @@ TestBoolean2
 		true -> Finish
 	Finish:
 
-TestBoolean3
+TestBooleanMachine3
 	Start: min_once message("TestBoolean3: start")
 		true -> T1
 	T1:
@@ -127,7 +127,7 @@ TestBoolean3
 		true -> Finish
 	Finish:
 
-TestInteger
+TestIntegerMachine
 	Start: min_once message("TestInteger: start")
 		true -> T1
 	T1:
@@ -168,7 +168,7 @@ TestInteger
 		true -> Finish
 	Finish:
 
-TestFloat
+TestFloatMachine
 	Start: min_once message("TestFloat: start")
 		true -> T1
 	T1:
@@ -211,7 +211,7 @@ TestFloat
 		true -> Finish
 	Finish:
 
-TestString
+TestStringMachine
 	Start: min_once message("TestString: start")
 		true -> T1
 	T1:
