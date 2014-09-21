@@ -1,0 +1,7 @@
+export TaskMachine
+
+Machine
+	Init: inc()	
+		isFinished() -> Finish
+	Finish:
+
