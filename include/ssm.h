@@ -1,7 +1,6 @@
 #ifndef SIMPLESTATEMACHINE_H
 #define SIMPLESTATEMACHINE_H
 
-#include <functional>
 #include <map>
 #include <memory>
 #include <set>
@@ -12,6 +11,7 @@
 
 // Module which can used by the state machine
 #include "Timer.h"
+#include "delegate.h"
 
 namespace SimpleStateMachine {
 
@@ -27,13 +27,13 @@ public:
 	std::tuple<Args...> tuple;
 };
 
-typedef std::function<void()>                      Action;
-typedef std::function<Action(Parameter const*)>    ActionPara;
-typedef std::map<std::string, ActionPara>          ActionParaMap;
+typedef delegate<void()>                      Action;
+typedef delegate<Action(Parameter const*)>    ActionPara;
+typedef std::map<std::string, ActionPara>     ActionParaMap;
 
-typedef std::function<bool()>                      Condition;
-typedef std::function<Condition(Parameter const*)> ConditionPara;
-typedef std::map<std::string, ConditionPara>       ConditionParaMap;
+typedef delegate<bool()>                      Condition;
+typedef delegate<Condition(Parameter const*)> ConditionPara;
+typedef std::map<std::string, ConditionPara>  ConditionParaMap;
 
 
 class State;
@@ -168,7 +168,7 @@ struct MethodCall { \
 #define DEF_GET_METHOD_CALL(NAME, CALL, ...) \
 template <class T, typename R, typename ...Args> \
 static auto get_method_call_##NAME##_impl(T* t, int, std::tuple<Args...> p) \
-	-> std::function<std::function<decltype(t->CALL)()>(Parameter const*)> { \
+	-> delegate<delegate<decltype(t->CALL)()>(Parameter const*)> { \
 	((void)p); \
 	return [t](Parameter const* _ps) { \
 		auto ps = dynamic_cast<Parameter_Impl<Args...> const*>(_ps); \
@@ -177,10 +177,10 @@ static auto get_method_call_##NAME##_impl(T* t, int, std::tuple<Args...> p) \
 	}; \
 } \
 template <class T, typename R, typename ...Args> \
-static std::function<std::function<R()>(Parameter const*)> get_method_call_##NAME##_impl(T* t, long, std::tuple<Args...> p) { \
+static delegate<delegate<R()>(Parameter const*)> get_method_call_##NAME##_impl(T* t, long, std::tuple<Args...> p) { \
 	((void)t); \
 	((void)p); \
-	return std::function<std::function<R()>(Parameter const*)>(); \
+	return delegate<delegate<R()>(Parameter const*)>(); \
 } \
 template <class T, typename R, typename ...Args> \
 static auto _get_method_call_##NAME(T* t) \
