@@ -8,7 +8,7 @@ private:
 public:
 	Task(int _finish) :i(0), finish(_finish) {}
 
-	bool isFinished();
+	bool isFinished() const;
 	void inc();
 };
 #endif

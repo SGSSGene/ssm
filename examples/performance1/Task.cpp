@@ -1,6 +1,6 @@
 #include "Task.h"
 
-bool Task::isFinished() {
+bool Task::isFinished() const {
 	return i == finish;
 }
 void Task::inc() {
