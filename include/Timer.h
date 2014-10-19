@@ -3,6 +3,9 @@
 
 #include <chrono>
 #include <iostream>
+
+namespace SimpleStateMachine {
+
 class Timer {
 private:
 	std::chrono::time_point<std::chrono::system_clock> start;
@@ -17,5 +20,7 @@ public:
 		return double(elapsed_milliseconds) * 0.001;
 	}
 };
+
+}
 
 #endif

@@ -430,7 +430,7 @@ sub generateCpp11 {
 	print OFILE "	ConditionParaMap conditionMap;$/";
 	print OFILE "	std::unique_ptr<Machine> machine;$/";
 	print OFILE "	std::set<std::string> neededMethods;$/";
-	print OFILE "	Timer timer;$/";
+	print OFILE "	SimpleStateMachine::Timer timer;$/";
 	print OFILE "	friend class CallMethod;$/";
 	print OFILE "public:$/";
 	print OFILE "	template<typename ...Args>$/";
