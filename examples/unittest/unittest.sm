@@ -29,8 +29,12 @@ UnittestMachine
 		* TestCharMachine
 
 	TestString:
-		TestStringMachine.Finish   -> Finish
+		TestStringMachine.Finish   -> TestTime
 		* TestStringMachine
+
+	TestTime:
+		TestTimeMachine.Finish     -> Finish
+		* TestTimeMachine
 
 	Finish: once message("finished all tests")
 
@@ -262,6 +266,17 @@ TestStringMachine
 	Error: min_once message("failed")
 		true -> Finish
 	Success: min_once message("succeeded")
+		true -> Finish
+	Finish:
+
+TestTimeMachine
+	Start: once message("Starting 10s timer test")
+		true -> T1
+	T1: once startTimer()
+		getTime() > 10. -> T2
+	T2:
+		true -> Success
+	Success: once message("succeeded")
 		true -> Finish
 	Finish:
 
