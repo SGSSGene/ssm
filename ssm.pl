@@ -168,6 +168,11 @@ sub analyseCondition {
 			$functionSignature .= "std::string" if $compareValue =~ /^$dt_str$/;
 		} else {
 			$functionNameGet .= " $compareFct $compareValue";
+
+			if ($compareValue =~ /^$dt_enum$/) {
+				$compareValue =~ /^(?:$word\:\:)*($word)$/;
+				$functionName .= "_$1";
+			}
 		}
 
 	return ($functionSignature, $functionValues, $functionName, $functionNameGet);
