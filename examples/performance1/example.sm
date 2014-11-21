@@ -1,6 +1,6 @@
 export TaskMachine
 
-Machine
+TaskMachine
 	Init: inc()	
 		isFinished() -> Finish
 	Finish:
