@@ -15,6 +15,27 @@
 
 namespace SimpleStateMachine {
 
+class IStateMachine {
+private:
+	std::string machineName;
+public:
+	IStateMachine(std::string const& _machineName)
+		: machineName(_machineName) {}
+
+	virtual ~IStateMachine() {};
+
+	virtual std::set<std::string> const& getUnmatchedSymbols() const = 0;
+
+	std::string const& getName() const { return machineName; }
+
+	virtual bool step() = 0;
+	void run() {
+		while(step());
+	}
+
+
+};
+
 class Parameter {
 public:
 	virtual ~Parameter() {}

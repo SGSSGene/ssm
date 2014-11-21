@@ -58,21 +58,27 @@ int main(int, char**) {
 	CharTest    c5;
 	StringTest  c6;
 
-	UnittestMachine machine(std::make_tuple(&c1, &c2, &c3, &c4, &c5, &c6));
-	TestIntegerMachine machine2(std::make_tuple(&c1, &c2, &c3, &c4, &c5, &c6));
-
-
-	if (machine.getUnmatchedSymbols().size() > 0) {
-		for (auto const& s : machine.getUnmatchedSymbols()) {
-			std::cout<<"unmatched1 symbols: "<<s<<std::endl;
+	std::vector<std::unique_ptr<IStateMachine>> machineList;
+	for (auto s : Factory::getStateMachineNames()) {
+		auto m = Factory::createStateMachine(s, std::make_tuple(&c1, &c2, &c3, &c4, &c5, &c6));
+		if (nullptr == m) {
+			std::cout<<"Couldn't create statemachine: "<<s<<std::endl;
+			return 1;
 		}
-		return 1;
-	}
-	if (machine2.getUnmatchedSymbols().size() != 8) {
-		std::cout<<"error, found symbols that shouldn't be found"<<std::endl;
+		machineList.push_back(std::move(m));
 	}
 
-	machine.run();
+	for (auto& m : machineList) {
+		if (m->getUnmatchedSymbols().size() > 0) {
+			for (auto const& s : m->getUnmatchedSymbols()) {
+				std::cout<<"unmatched symbols: "<<s<<std::endl;
+			}
+			return 1;
+		}
+	}
+	for (auto& m : machineList) {
+		m->run();
+	}
 
 	return 0;
 }

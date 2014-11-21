@@ -336,7 +336,7 @@ sub printTransition {
 	print OFILE "		auto conditionIter = stateConditionMap.find(\"${srcState}_${conditionName}\");$/";
 	print OFILE "		if (conditionIter == stateConditionMap.end()) conditionIter = conditionMap.find(\"$conditionName\");$/";
 	print OFILE "		else if (neededMethods.find(\"$conditionName\") != neededMethods.end()) neededMethods.erase(neededMethods.find(\"$conditionName\"));$/";
-	print OFILE "		if (conditionIter == conditionMap.end()) conditionIter = conditionMap.find(\"false_equal_p\");$/";
+	print OFILE "		if (conditionIter == conditionMap.end()) { conditionIter = conditionMap.find(\"false_equal_p\"); notFoundMethods.insert(\"${conditionName}\"); }$/";
 	print OFILE "		Parameter_Impl<$conditionSignature> parameter(std::make_tuple($conditionValues));$/";
 	print OFILE "		states.at(\"$srcState\")->addTransition(conditionIter->second(&parameter), states.at(\"$_->{targetState}\"));$/";
 
@@ -442,18 +442,21 @@ sub generateCpp11 {
 		print OFILE "$/";
 		print OFILE "#include $g_includeSSM$/";
 		print OFILE "using namespace SimpleStateMachine;$/";
-		print OFILE "class ${Machine} {$/";
+		print OFILE "class ${Machine} : public IStateMachine {$/";
 		print OFILE "private:$/";
 		print OFILE "	ActionParaMap actionMap;$/";
 		print OFILE "	ConditionParaMap conditionMap;$/";
 		print OFILE "	std::unique_ptr<Machine> machine;$/";
 		print OFILE "	std::set<std::string> neededMethods;$/";
+		print OFILE "   std::set<std::string> notFoundMethods;$/";
 		print OFILE "	SimpleStateMachine::Timer timer;$/";
 		print OFILE "	friend struct CallMethod;$/";
 		print OFILE "public:$/";
+		print OFILE "	virtual ~${Machine}() override {}$/";
 		print OFILE "	struct MethodCall;$/";
 		print OFILE "	template<typename ...Args>$/";
-		print OFILE "	${Machine}(std::tuple<Args...> _t) {$/";
+		print OFILE "	${Machine}(std::tuple<Args...> _t)$/";
+		print OFILE "		: IStateMachine(\"${Machine}\") {$/";
 		print OFILE "		initNeededMethods();$/";
 		print OFILE "		auto t = std::tuple_cat(std::make_tuple(&timer), _t);$/";
 		print OFILE "		${Machine}autoRegisterAll(&actionMap, &conditionMap, t, neededMethods);$/";
@@ -461,21 +464,20 @@ sub generateCpp11 {
 		print OFILE "		machine->start();$/";
 		print OFILE "	}$/";
 		print OFILE "	template<typename T>$/";
-		print OFILE "	${Machine}(T* _o) {$/";
+		print OFILE "	${Machine}(T* _o)$/";
+		print OFILE "		: IStateMachine(\"${Machine}\") {$/";
 		print OFILE "		initNeededMethods();$/";
 		print OFILE "		auto t = std::make_tuple(&timer, _o);$/";
 		print OFILE "		${Machine}autoRegisterAll(&actionMap, &conditionMap, t, neededMethods);$/";
 		print OFILE "		machine = std::move(get(actionMap, conditionMap));$/";
 		print OFILE "		machine->start();$/";
 		print OFILE "	}$/";
-		print OFILE "	std::set<std::string> const& getUnmatchedSymbols() const { return neededMethods; }$/";
-		print OFILE "	void run() {$/";
-		print OFILE "		while(step());$/";
-		print OFILE "	}$/";
-		print OFILE "	bool step() {$/";
+		print OFILE "	std::set<std::string> const& getUnmatchedSymbols() const override { return notFoundMethods; }$/";
+		print OFILE "	bool step() override {$/";
 		print OFILE "		machine->step();$/";
 		print OFILE "		return machine->hasTransitions();$/";
 		print OFILE "	}$/";
+		print OFILE "private:$/";
 		print OFILE "	std::unique_ptr<Machine> get(ActionParaMap actionMap, ConditionParaMap conditionMap) {$/";
 		print OFILE "		MachinePtrList machines;$/";
 		print OFILE "		ConditionParaMap stateConditionMap;$/";
@@ -523,6 +525,32 @@ sub generateCpp11 {
 
 		print OFILE "#endif$/";
 	}
+
+	print OFILE "#ifndef SIMPLESTATEMACHINE_FACTORY$/";
+	print OFILE "#define SIMPLESTATEMACHINE_FACTORY$/";
+	print OFILE "namespace SimpleStateMachine {$/";
+	print OFILE "$/";
+	print OFILE "class Factory {$/";
+	print OFILE "public:$/";
+	print OFILE "	template<typename T>$/";
+	print OFILE "	static std::unique_ptr<IStateMachine> createStateMachine(std::string const& str, T t) {$/";
+		foreach (@g_exportMachines) {
+			print OFILE "		if (str == \"$_\") return std::unique_ptr<IStateMachine>(new $_(t));$/";
+		}
+	print OFILE "		return nullptr;$/";
+	print OFILE "	}$/";
+	print OFILE "	static std::set<std::string> getStateMachineNames() {$/";
+	print OFILE "		std::set<std::string> stateMachineNames {";
+	foreach (@g_exportMachines) {
+		print OFILE "\"$_\", ";
+	}
+	print OFILE "};$/";
+	print OFILE "		return stateMachineNames;$/";
+	print OFILE "	}$/";
+	print OFILE "};$/";
+	print OFILE "}$/";
+	print OFILE "#endif$/";
+
 }
 sub printHelp
 {
