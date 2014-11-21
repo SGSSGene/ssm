@@ -3,7 +3,7 @@ all: unittest
 %.sm.h: %.sm
 	../../ssm.pl -i '"../../include/ssm.h"' --cpp11 $?
 
-unittest: unittest.cpp $(patsubst %,%.h,$(wildcard *.sm))
+unittest: unittest.cpp unittest.sm.h
 	g++ -std=c++11 -O3 \
 	    -o unittest \
 	    unittest.cpp \
