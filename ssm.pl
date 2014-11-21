@@ -524,6 +524,7 @@ sub printHelp
 	print "Usage:$/ssm.pl [--cpp11] [--dot] [--png] [--view] <file>$/";
 	print "creates a diagram to view *.sm files$/$/";
 	print "--cpp11                 creates header file to include by your project$/$/";
+	print "--export                list all machines that would be exported$/$/";
 	print "--dot                   creates a .dot file that can be parsed by graphviz$/$/";
 	print "--png                   creates a .png file of the given state machine$/$/";
 	print "--view                  opens eog to view given state machine$/$/";
@@ -531,16 +532,18 @@ sub printHelp
 }
 
 
-my $dot   = 0;
-my $png   = 0;
-my $help  = 0;
-my $cpp11 = 0;
-my $view  = 0;
+my $dot    = 0;
+my $png    = 0;
+my $help   = 0;
+my $cpp11  = 0;
+my $view   = 0;
+my $export = 0;
 
 $help = 1 unless GetOptions ("dot"       => \$dot,
                              "cpp11"     => \$cpp11,
                              "png"       => \$png,
                              "view"      => \$view,
+                             "export"    => \$export,
                              "ssm-include|i=s" => \$g_includeSSM,
                              "help|h"    => \$help);
 my $file = shift;
@@ -577,7 +580,6 @@ if ($dot) {
 	open OFILE, "| dot -Tpng >$outputFile; eog $outputFile" or die $!;
 
 	&generateDot($inputFile, $outputFile);
-
 } elsif ($cpp11) {
 	$outputFile = "$inputFile.h";
 	my %HoA = &analyseCode($inputFile);
@@ -586,6 +588,11 @@ if ($dot) {
 		open OFILE, ">$outputFile" or die $!;
 
 		&generateCpp11($inputFile, $outputFile, \%HoA);
+	}
+} elsif ($export) {
+	my %HoA = &analyseCode($inputFile);
+	foreach (@g_exportMachines) {
+		print $_.$/;
 	}
 } else {
 	&printHelp;
