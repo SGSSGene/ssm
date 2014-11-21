@@ -1,0 +1,34 @@
+
+TestBooleanMachine1
+	Start: min_once message("TestBoolean1: start")
+		true -> T1
+	T1:
+		false -> Error
+		else -> T2
+	T2:
+		condition_true() -> T3
+		else -> Error
+	T3:
+		!condition_false() -> T4
+		else -> Error
+	T4:
+		condition_true() == true -> T5
+		else -> Error
+	T5:
+		condition_false() == false -> T6
+		else -> Error
+	T6:
+		condition_true() != false -> T7
+		else -> Error
+	T7:
+		condition_false() != true -> T8
+		else -> Error
+	T8:
+		true -> Success
+
+	Error: min_once message("failed")
+		true -> Finish
+	Success: min_once message("succeeded")
+		true -> Finish
+	Finish:
+

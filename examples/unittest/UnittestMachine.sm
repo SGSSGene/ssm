@@ -1,0 +1,40 @@
+UnittestMachine
+	State0: min_once message("Starte Tests:")
+		true -> TestBoolean1
+	
+	TestBoolean1:
+		TestBooleanMachine1.Finish -> TestBoolean2
+		* TestBooleanMachine1
+
+	TestBoolean2:
+		TestBooleanMachine2.Finish -> TestBoolean3
+		* TestBooleanMachine2
+	
+	TestBoolean3:
+		TestBooleanMachine3.Finish -> TestInteger
+		* TestBooleanMachine3
+	
+	TestInteger:
+		TestIntegerMachine.Finish  -> TestFloat
+		* TestIntegerMachine
+
+	TestFloat:
+		TestFloatMachine.Finish    -> TestChar
+		* TestFloatMachine
+
+	TestChar:
+		TestCharMachine.Finish     -> TestString
+		* TestCharMachine
+
+	TestString:
+		TestStringMachine.Finish   -> TestTime
+		* TestStringMachine
+
+	TestTime:
+		TestTimeMachine.Finish     -> Finish
+		* TestTimeMachine
+
+	Finish: once message("finished all tests")
+
+
+

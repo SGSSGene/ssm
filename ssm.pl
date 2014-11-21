@@ -4,12 +4,13 @@ use strict;
 
 use Data::Dumper;
 use Getopt::Long;
+use File::Basename;
 
 
-my $g_machineName;
-my $g_initialMachineName;
+my @g_exportMachines;
 my $g_includeSSM = "\"ssm.h\"";
 my $g_inputFile = "";
+my $g_dirname = "";
 
 #Regex to identifie words, datatypes etc...
 	my $word = '[_a-zA-Z][_a-zA-Z0-9]*';
@@ -181,84 +182,92 @@ sub analyseCondition {
 
 sub analyseCode {
 
-my $inputFile = shift;
+	my @inputFileQueue;
+	$inputFileQueue[0] = shift;
 
-my %HoA = ();
-my $initMachine = "";
-my $machineName = "";
-my $stateName   = "";
-open IFILE, "<$inputFile" or die $!;
+	my %HoA = ();
 
-while (<IFILE>) {
-	my $line = $_;
 
-	# Extract comments at end of line
-	if (/(^[^\#]*)\#.*$/) {
-		$line = $1;
-	}
-	# Process if export keyword
-	if ($line =~ /^export\s($word)$/) {
-		$g_machineName = $1;
-	}
-	# Process only if not an empty line
-	elsif (not $line =~ /^\s*$/) {
+	while(scalar @inputFileQueue  > 0) {
+		my $inputFile = shift @inputFileQueue;
+		my $machineName = "";
+		my $stateName   = "";
+		open IFILE, "<$inputFile" or die $!;
 
-		# Check if new machine name
-		if ($line =~ /^($word)$/) {
-			$machineName = $1;
-			$g_initialMachineName = $machineName unless $g_initialMachineName;
-			$stateName = "";
-			$initMachine = $machineName if $initMachine eq "";
-			$HoA { $machineName } = { initState => "",
-			                          stateList => {}};
+		while (<IFILE>) {
+			my $line = $_;
 
-		} elsif ($line =~ /^\t($word)\s*:\s*(any\s|once\s|min_once\s|max_once\s)?\s*($function)?\s*$/) {
-			die "Parsing State without State Machine in file $g_inputFile" if $machineName eq "";
-			$stateName = $1;
-			$HoA { $machineName }{ initState } = $stateName if $HoA { $machineName }{ initState } eq "";
-		
-			my $executeType       = "any";
-			my $action            = "";
+			# Extract comments at end of line
+			if (/(^[^\#]*)\#.*$/) {
+				$line = $1;
+			}
+			# Process if export keyword
+			if ($line =~ /^export\s+($word)\s*$/) {
+				@g_exportMachines[scalar @g_exportMachines] = $1;
 
-			$executeType = $2 if $2;
-			$action      = $3 if $3;
-			$executeType = $1 if $executeType =~ /^(.*) $/;
-			my ($functionSignature, $functionValues, $functionName, $functionNameGet) = &analyseFunction($action) if $action;
-			$HoA { $machineName }{ stateList }{ $stateName }
-			        = { action => $action,
-			        	functionSignature => $functionSignature,
-			        	functionValues    => $functionValues,
-			        	functionName      => $functionName,
-			        	functionNameGet   => $functionNameGet,
-			            executeType       => $executeType,
-			            transitionList    => [],
-			            submachineList    => [] };
+			# Process includes
+			} elsif ($line =~ /^include\s+($word.sm)\s*$/) {
+				$inputFileQueue[scalar @inputFileQueue] = $g_dirname."/".$1;
+				
+			# Process only if not an empty line
+			} elsif (not $line =~ /^\s*$/) {
 
-		} elsif ($line =~ /^\t\t($conditionRegEx)\s*->\s*($wordRegEx)\s*$/) {
-			die "Parsing transition without state in file $g_inputFile" if $stateName eq "";
+				# Check if new machine name
+				if ($line =~ /^($word)$/) {
+					$machineName = $1;
+					$stateName = "";
+					$HoA { $machineName } = { initState => "",
+											  stateList => {}};
 
-			my $condition   = $1;
-			my $targetState = $2;
+				} elsif ($line =~ /^\t($word)\s*:\s*(any\s|once\s|min_once\s|max_once\s)?\s*($function)?\s*$/) {
+					die "Parsing State without State Machine in file $g_inputFile" if $machineName eq "";
+					$stateName = $1;
+					$HoA { $machineName }{ initState } = $stateName if $HoA { $machineName }{ initState } eq "";
+				
+					my $executeType       = "any";
+					my $action            = "";
 
-			my ($functionSignature, $functionValues, $functionName, $functionNameGet) = &analyseCondition($condition) if $condition;
+					$executeType = $2 if $2;
+					$action      = $3 if $3;
+					$executeType = $1 if $executeType =~ /^(.*) $/;
+					my ($functionSignature, $functionValues, $functionName, $functionNameGet) = &analyseFunction($action) if $action;
+					$HoA { $machineName }{ stateList }{ $stateName }
+							= { action => $action,
+								functionSignature => $functionSignature,
+								functionValues    => $functionValues,
+								functionName      => $functionName,
+								functionNameGet   => $functionNameGet,
+								executeType       => $executeType,
+								transitionList    => [],
+								submachineList    => [] };
 
-			push @{ $HoA { $machineName }{ stateList } { $stateName }{ transitionList }},
-			        { condition         => $condition,
-			          functionSignature => $functionSignature,
-			          functionValues    => $functionValues,
-			          functionName      => $functionName,
-			          functionNameGet   => $functionNameGet,
-			          targetState       => $targetState };
-		} elsif ($line =~ /^\t\t\*\s+($word)\s*$/) {
-			die "Parsing submachine without state in file $g_inputFile" if $stateName eq "";
-			push @{ $HoA { $machineName }{ stateList }{ $stateName }{ submachineList } }, $1;
-		} else {
-			die "can't parse line $. $_ in $g_inputFile";
+				} elsif ($line =~ /^\t\t($conditionRegEx)\s*->\s*($wordRegEx)\s*$/) {
+					die "Parsing transition without state in file $g_inputFile" if $stateName eq "";
+
+					my $condition   = $1;
+					my $targetState = $2;
+
+					my ($functionSignature, $functionValues, $functionName, $functionNameGet) = &analyseCondition($condition) if $condition;
+
+					push @{ $HoA { $machineName }{ stateList } { $stateName }{ transitionList }},
+							{ condition         => $condition,
+							  functionSignature => $functionSignature,
+							  functionValues    => $functionValues,
+							  functionName      => $functionName,
+							  functionNameGet   => $functionNameGet,
+							  targetState       => $targetState };
+				} elsif ($line =~ /^\t\t\*\s+($word)\s*$/) {
+					die "Parsing submachine without state in file $g_inputFile" if $stateName eq "";
+					push @{ $HoA { $machineName }{ stateList }{ $stateName }{ submachineList } }, $1;
+				} else {
+					die "can't parse line $. $_ in $g_inputFile";
+				}
+			}
 		}
+		close (IFILE);
 	}
-}
-close (IFILE);
-# Check if all target States are valid
+
+	# Check if all target States are valid
 	while (my ($m, $mv) = each %HoA) {
 		while (my ($s, $sv) = each ${mv}->{stateList}) {
 			foreach(@{${sv}->{transitionList}}) {
@@ -421,93 +430,94 @@ sub generateCpp11 {
 		}
 	}
 
+	foreach (@g_exportMachines) {
+		my $Machine = $_;
+		my $MACHINE = uc $Machine;
+		print OFILE "#ifndef SIMPLESTATEMACHINE_GENERATED_${MACHINE}$/";
+		print OFILE "#define SIMPLESTATEMACHINE_GENERATED_${MACHINE}$/";
+		print OFILE "$/";
+		print OFILE "#include $g_includeSSM$/";
+		print OFILE "using namespace SimpleStateMachine;$/";
+		print OFILE "class ${Machine} {$/";
+		print OFILE "private:$/";
+		print OFILE "	ActionParaMap actionMap;$/";
+		print OFILE "	ConditionParaMap conditionMap;$/";
+		print OFILE "	std::unique_ptr<Machine> machine;$/";
+		print OFILE "	std::set<std::string> neededMethods;$/";
+		print OFILE "	SimpleStateMachine::Timer timer;$/";
+		print OFILE "	friend class CallMethod;$/";
+		print OFILE "public:$/";
+		print OFILE "	template<typename ...Args>$/";
+		print OFILE "	${Machine}(std::tuple<Args...> _t) {$/";
+		print OFILE "		initNeededMethods();$/";
+		print OFILE "		auto t = std::tuple_cat(std::make_tuple(&timer), _t);$/";
+		print OFILE "		autoRegisterAll(&actionMap, &conditionMap, t, neededMethods);$/";
+		print OFILE "		machine = std::move(get(actionMap, conditionMap));$/";
+		print OFILE "		machine->start();$/";
+		print OFILE "	}$/";
+		print OFILE "	template<typename T>$/";
+		print OFILE "	${Machine}(T* _o) {$/";
+		print OFILE "		initNeededMethods();$/";
+		print OFILE "		auto t = std::make_tuple(&timer, _o);$/";
+		print OFILE "		autoRegisterAll(&actionMap, &conditionMap, t, neededMethods);$/";
+		print OFILE "		machine = std::move(get(actionMap, conditionMap));$/";
+		print OFILE "		machine->start();$/";
+		print OFILE "	}$/";
+		print OFILE "	std::set<std::string> const& getUnmatchedSymbols() const { return neededMethods; }$/";
+		print OFILE "	void run() {$/";
+		print OFILE "		while(step());$/";
+		print OFILE "	}$/";
+		print OFILE "	bool step() {$/";
+		print OFILE "		machine->step();$/";
+		print OFILE "		return machine->hasTransitions();$/";
+		print OFILE "	}$/";
+		print OFILE "	std::unique_ptr<Machine> get(ActionParaMap actionMap, ConditionParaMap conditionMap) {$/";
+		print OFILE "		MachinePtrList machines;$/";
+		print OFILE "		ConditionParaMap stateConditionMap;$/";
+		print OFILE "		ConditionParaMap superStateConditionMap;$/";
+		print OFILE "		std::string stateName = \"\";$/";
+			&printMachine(\%HoA, $Machine);
+		print OFILE "		return std::move(machines[0]);$/";
+		print OFILE "	}$/";
+		print OFILE "	void initNeededMethods() {$/";
+		print OFILE "		neededMethods = {$/";
+			while (my ($a, $av) = each %actions) {
+				print OFILE "\"$a\",$/";
+			}
+			while (my ($a, $av) = each %conditions) {
+				print OFILE "\"$a\",$/";
+			}
+		print OFILE "	};$/";
+		print OFILE "	}$/";
+		print OFILE "$/";
+		print OFILE "};$/";
 
-	my $Machine = $g_machineName;
-	my $MACHINE = uc $Machine;
-	print OFILE "#ifndef SIMPLESTATEMACHINE_GENERATED_${MACHINE}$/";
-	print OFILE "#define SIMPLESTATEMACHINE_GENERATED_${MACHINE}$/";
-	print OFILE "$/";
-	print OFILE "#include $g_includeSSM$/";
-	print OFILE "using namespace SimpleStateMachine;$/";
-	print OFILE "class ${Machine} {$/";
-	print OFILE "private:$/";
-	print OFILE "	ActionParaMap actionMap;$/";
-	print OFILE "	ConditionParaMap conditionMap;$/";
-	print OFILE "	std::unique_ptr<Machine> machine;$/";
-	print OFILE "	std::set<std::string> neededMethods;$/";
-	print OFILE "	SimpleStateMachine::Timer timer;$/";
-	print OFILE "	friend class CallMethod;$/";
-	print OFILE "public:$/";
-	print OFILE "	template<typename ...Args>$/";
-	print OFILE "	${Machine}(std::tuple<Args...> _t) {$/";
-	print OFILE "		initNeededMethods();$/";
-	print OFILE "		auto t = std::tuple_cat(std::make_tuple(&timer), _t);$/";
-	print OFILE "		autoRegisterAll(&actionMap, &conditionMap, t, neededMethods);$/";
-	print OFILE "		machine = std::move(get(actionMap, conditionMap));$/";
-	print OFILE "		machine->start();$/";
-	print OFILE "	}$/";
-	print OFILE "	template<typename T>$/";
-	print OFILE "	${Machine}(T* _o) {$/";
-	print OFILE "		initNeededMethods();$/";
-	print OFILE "		auto t = std::make_tuple(&timer, _o);$/";
-	print OFILE "		autoRegisterAll(&actionMap, &conditionMap, t, neededMethods);$/";
-	print OFILE "		machine = std::move(get(actionMap, conditionMap));$/";
-	print OFILE "		machine->start();$/";
-	print OFILE "	}$/";
-	print OFILE "	std::set<std::string> const& getUnmatchedSymbols() const { return neededMethods; }$/";
-	print OFILE "	void run() {$/";
-	print OFILE "		while(step());$/";
-	print OFILE "	}$/";
-	print OFILE "	bool step() {$/";
-	print OFILE "		machine->step();$/";
-	print OFILE "		return machine->hasTransitions();$/";
-	print OFILE "	}$/";
-	print OFILE "	std::unique_ptr<Machine> get(ActionParaMap actionMap, ConditionParaMap conditionMap) {$/";
-	print OFILE "		MachinePtrList machines;$/";
-	print OFILE "		ConditionParaMap stateConditionMap;$/";
-	print OFILE "		ConditionParaMap superStateConditionMap;$/";
-	print OFILE "		std::string stateName = \"\";$/";
-		&printMachine(\%HoA, $g_initialMachineName);
-	print OFILE "		return std::move(machines[0]);$/";
-	print OFILE "	}$/";
-	print OFILE "	void initNeededMethods() {$/";
-	print OFILE "		neededMethods = {$/";
+
+		print OFILE "DEF_GET_METHOD_CALL_BEGIN$/";
 		while (my ($a, $av) = each %actions) {
-			print OFILE "\"$a\",$/";
+			print OFILE "\tDEF_GET_METHOD_CALL($a, $av->{call}, void";
+			print OFILE ", $av->{signature}" if $av->{signature};
+			print OFILE ")$/";
 		}
 		while (my ($a, $av) = each %conditions) {
-			print OFILE "\"$a\",$/";
+			print OFILE "\tDEF_GET_METHOD_CALL($a, $av->{call}, bool";
+			print OFILE ", $av->{signature}" if $av->{signature};
+			print OFILE ")$/";
 		}
-	print OFILE "	};$/";
-	print OFILE "	}$/";
-	print OFILE "$/";
-	print OFILE "};$/";
+		print OFILE "DEF_GET_METHOD_CALL_END$/";
 
+		print OFILE "DEF_AUTO_REGISTER_BEGIN$/";
 
-	print OFILE "DEF_GET_METHOD_CALL_BEGIN$/";
-	while (my ($a, $av) = each %actions) {
-		print OFILE "\tDEF_GET_METHOD_CALL($a, $av->{call}, void";
-		print OFILE ", $av->{signature}" if $av->{signature};
-		print OFILE ")$/";
+		while (my ($a, $av) = each %actions) {
+			print OFILE "	DEF_AUTO_REGISTER_ACTION($a)$/";
+		}
+		while (my ($a, $av) = each %conditions) {
+			print OFILE "	DEF_AUTO_REGISTER_CONDITION($a)$/";
+		}
+		print OFILE "DEF_AUTO_REGISTER_END$/";
+
+		print OFILE "#endif$/";
 	}
-	while (my ($a, $av) = each %conditions) {
-		print OFILE "\tDEF_GET_METHOD_CALL($a, $av->{call}, bool";
-		print OFILE ", $av->{signature}" if $av->{signature};
-		print OFILE ")$/";
-	}
-	print OFILE "DEF_GET_METHOD_CALL_END$/";
-
-	print OFILE "DEF_AUTO_REGISTER_BEGIN$/";
-
-	while (my ($a, $av) = each %actions) {
-		print OFILE "	DEF_AUTO_REGISTER_ACTION($a)$/";
-	}
-	while (my ($a, $av) = each %conditions) {
-		print OFILE "	DEF_AUTO_REGISTER_CONDITION($a)$/";
-	}
-	print OFILE "DEF_AUTO_REGISTER_END$/";
-
-	print OFILE "#endif$/";
 }
 sub printHelp
 {
@@ -533,8 +543,10 @@ $help = 1 unless GetOptions ("dot"       => \$dot,
                              "view"      => \$view,
                              "ssm-include|i=s" => \$g_includeSSM,
                              "help|h"    => \$help);
-
 my $file = shift;
+
+$g_dirname = dirname($file);
+
 $help = 1 unless $file;
 #$help = 1 unless defined $input;
 if ($help) {

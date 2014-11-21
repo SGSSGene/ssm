@@ -1,0 +1,32 @@
+TestBooleanMachine3
+	Start: min_once message("TestBoolean3: start")
+		true -> T1
+	T1:
+		mirror(false).condition_true() -> T2
+		else -> Error
+	T2:
+		mirror(true).condition_false() -> T3
+		else -> Error
+	T3:
+		!mirror(true).condition_true() -> T4
+		else -> Error
+	T4:
+		!mirror(true).negate(false) -> T5
+		else -> Error
+	T5:
+		equals(true, true)  == false -> Error
+		equals(true, false)          -> Error
+		equals(true, false) != false -> Error
+		equals(true, false) == true  -> Error
+		!equals(true, true)          -> Error
+		equals(true, true)           -> T6
+		else                         -> Error
+	T6:
+		true -> Success
+
+	Error: min_once message("failed")
+		true -> Finish
+	Success: min_once message("succeeded")
+		true -> Finish
+	Finish:
+

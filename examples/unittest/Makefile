@@ -1,7 +1,9 @@
 all: unittest
 
-unittest: unittest.cpp unittest.sm
-	../../ssm.pl -i '"../../include/ssm.h"' --cpp11 unittest.sm
+%.sm.h: %.sm
+	../../ssm.pl -i '"../../include/ssm.h"' --cpp11 $?
+
+unittest: unittest.cpp $(patsubst %,%.h,$(wildcard *.sm))
 	g++ -std=c++11 -O3 \
 	    -o unittest \
 	    unittest.cpp \
@@ -11,5 +13,5 @@ run: unittest
 
 clean:
 	rm -f unittest
-	rm -f unittest.sm.h
+	rm -f *.sm.h
 

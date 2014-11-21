@@ -58,7 +58,7 @@ int main(int, char**) {
 	CharTest    c5;
 	StringTest  c6;
 
-	Unittest machine(std::make_tuple(&c1, &c2, &c3, &c4, &c5, &c6));
+	UnittestMachine machine(std::make_tuple(&c1, &c2, &c3, &c4, &c5, &c6));
 
 	if (machine.getUnmatchedSymbols().size() > 0) {
 		for (auto const& s : machine.getUnmatchedSymbols()) {
