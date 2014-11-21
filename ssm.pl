@@ -187,12 +187,15 @@ sub analyseCode {
 
 	my %HoA = ();
 
+	my $fileNbr=0;
+
 
 	while(scalar @inputFileQueue  > 0) {
 		my $inputFile = shift @inputFileQueue;
 		my $machineName = "";
 		my $stateName   = "";
 		open IFILE, "<$inputFile" or die $!;
+		$fileNbr = $fileNbr + 1;
 
 		while (<IFILE>) {
 			my $line = $_;
@@ -203,8 +206,9 @@ sub analyseCode {
 			}
 			# Process if export keyword
 			if ($line =~ /^export\s+($word)\s*$/) {
-				@g_exportMachines[scalar @g_exportMachines] = $1;
-
+				if ($fileNbr == 1) {
+					@g_exportMachines[scalar @g_exportMachines] = $1;
+				}
 			# Process includes
 			} elsif ($line =~ /^include\s+($word.sm)\s*$/) {
 				$inputFileQueue[scalar @inputFileQueue] = $g_dirname."/".$1;
