@@ -137,33 +137,65 @@ inline bool State::hasTransitions() const {
 	return false;
 }
 
-#define DEF_AUTO_REGISTER_BEGIN \
+#define DEF_AUTO_REGISTER_BEGIN(MACHINE) \
 namespace SimpleStateMachine { \
 template <class O> \
-void _autoRegister(ActionParaMap* actionMap, ConditionParaMap* conditionMap, O* o, std::set<std::string>& neededMethods) {
+void MACHINE##_autoRegister(ActionParaMap* actionMap, ConditionParaMap* conditionMap, O* o, std::set<std::string>& neededMethods) {
 
-#define DEF_AUTO_REGISTER_ACTION(NAME) { \
-	auto fct = MethodCall::get_method_call_##NAME(o); \
+#define DEF_AUTO_REGISTER_ACTION(MACHINE, NAME) { \
+	auto fct = MACHINE##MethodCall::get_method_call_##NAME(o); \
 	if (fct) { \
 		(*actionMap)[#NAME] = fct; \
 		if (neededMethods.find(#NAME) != neededMethods.end()) neededMethods.erase(neededMethods.find(#NAME));\
 	} \
 }
 
-#define DEF_AUTO_REGISTER_CONDITION(NAME) { \
-	auto fct = MethodCall::get_method_call_##NAME(o); \
+#define DEF_AUTO_REGISTER_CONDITION(MACHINE, NAME) { \
+	auto fct = MACHINE##MethodCall::get_method_call_##NAME(o); \
 	if (fct) { \
 		(*conditionMap)[#NAME] = fct; \
 		if (neededMethods.find(#NAME) != neededMethods.end()) neededMethods.erase(neededMethods.find(#NAME));\
 	} \
 }
 
-#define DEF_AUTO_REGISTER_END }}
+#define DEF_AUTO_REGISTER_END(MACHINE) \
+} \
+struct MACHINE##RegisterActionsAndConditions { \
+	ActionParaMap*    actionMap; \
+	ConditionParaMap* conditionMap; \
+	std::set<std::string>& neededMethods; \
+\
+	MACHINE##RegisterActionsAndConditions(ActionParaMap* _actionMap, ConditionParaMap* _conditionMap, std::set<std::string>& _neededMethods) \
+		: actionMap(_actionMap), conditionMap(_conditionMap), neededMethods(_neededMethods) {} \
+\
+	template <typename T> \
+	void operator () (T && t) { \
+		MACHINE##_autoRegister(actionMap, conditionMap, t, neededMethods); \
+	} \
+}; \
+template<typename ...Para> \
+void MACHINE##autoRegisterAll(ActionParaMap* actionMap, ConditionParaMap* conditionMap, std::tuple<Para...> _p, std::set<std::string>& neededMethods) { \
+	MACHINE##RegisterActionsAndConditions _register(actionMap, conditionMap, neededMethods); \
+	(*conditionMap)["true_equal_p"]   = [](Parameter const* _p) { \
+		auto* p = dynamic_cast<Parameter_Impl<bool> const*>(_p); \
+		auto t = p->tuple; \
+		return [t] { return true == std::get<0>(t);  }; \
+	}; \
+	(*conditionMap)["true_unequal_p"]   = [](Parameter const* _p) { \
+		auto p = dynamic_cast<Parameter_Impl<bool> const*>(_p); \
+		auto t = p->tuple; \
+		return [t] { return true != std::get<0>(t);  }; \
+	}; \
+	(*conditionMap)["false_unequal_p"] = (*conditionMap)["true_equal_p"]; \
+	(*conditionMap)["false_equal_p"]   = (*conditionMap)["true_unequal_p"]; \
+	(*conditionMap)["else_equal_p"]    = (*conditionMap)["true_equal_p"]; \
+	(*actionMap)[""] = [](Parameter const* _p) { return []() {}; }; \
+	for_each_in_tuple(_p, _register); \
+}}
 
-#define DEF_GET_METHOD_CALL_BEGIN \
-namespace SimpleStateMachine { \
+#define DEF_GET_METHOD_CALL_BEGIN(MACHINE) \
 using namespace std; \
-struct MethodCall { \
+struct MACHINE##MethodCall { \
 
 #define DEF_GET_METHOD_CALL(NAME, CALL, ...) \
 template <class T, typename R, typename ...Args> \
@@ -194,7 +226,7 @@ static auto get_method_call_##NAME(T* t) \
 }
 
 #define DEF_GET_METHOD_CALL_END \
-};}
+};
 
 template<int... Is>
 struct seq {};
@@ -216,40 +248,6 @@ void for_each_in_tuple(std::tuple<Ts...> const& t, F f) {
 	for_each_impl(t, f, gen_seq<sizeof...(Ts)>());
 }
 
-struct RegisterActionsAndConditions {
-	ActionParaMap*    actionMap;
-	ConditionParaMap* conditionMap;
-	std::set<std::string>& neededMethods;
-
-	RegisterActionsAndConditions(ActionParaMap* _actionMap, ConditionParaMap* _conditionMap, std::set<std::string>& _neededMethods)
-		: actionMap(_actionMap), conditionMap(_conditionMap), neededMethods(_neededMethods) {}
-
-	template <typename T>
-	void operator () (T && t) {
-		_autoRegister(actionMap, conditionMap, t, neededMethods);
-	}
-};
-template<typename ...Para>
-void autoRegisterAll(ActionParaMap* actionMap, ConditionParaMap* conditionMap, std::tuple<Para...> _p, std::set<std::string>& neededMethods) {
-	RegisterActionsAndConditions _register(actionMap, conditionMap, neededMethods);
-	// Adding default behavior
-	(*conditionMap)["true_equal_p"]   = [](Parameter const* _p) {
-		auto* p = dynamic_cast<Parameter_Impl<bool> const*>(_p);
-		auto t = p->tuple;
-		return [t] { return true == std::get<0>(t);  };
-	};
-	(*conditionMap)["true_unequal_p"]   = [](Parameter const* _p) {
-		auto p = dynamic_cast<Parameter_Impl<bool> const*>(_p);
-		auto t = p->tuple;
-		return [t] { return true != std::get<0>(t);  };
-	};
-	(*conditionMap)["false_unequal_p"] = (*conditionMap)["true_equal_p"];
-	(*conditionMap)["false_equal_p"]   = (*conditionMap)["true_unequal_p"];
-	(*conditionMap)["else_equal_p"]    = (*conditionMap)["true_equal_p"];
-	// Adding default actions
-	(*actionMap)[""] = [](Parameter const* _p) { return []() {}; };
-	for_each_in_tuple(_p, _register);
-}
 }
 
 #endif

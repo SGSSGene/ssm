@@ -59,12 +59,17 @@ int main(int, char**) {
 	StringTest  c6;
 
 	UnittestMachine machine(std::make_tuple(&c1, &c2, &c3, &c4, &c5, &c6));
+	TestIntegerMachine machine2(std::make_tuple(&c1, &c2, &c3, &c4, &c5, &c6));
+
 
 	if (machine.getUnmatchedSymbols().size() > 0) {
 		for (auto const& s : machine.getUnmatchedSymbols()) {
-			std::cout<<"unmatched symbols: "<<s<<std::endl;
+			std::cout<<"unmatched1 symbols: "<<s<<std::endl;
 		}
 		return 1;
+	}
+	if (machine2.getUnmatchedSymbols().size() != 8) {
+		std::cout<<"error, found symbols that shouldn't be found"<<std::endl;
 	}
 
 	machine.run();

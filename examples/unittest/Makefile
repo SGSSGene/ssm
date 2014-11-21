@@ -7,6 +7,7 @@ unittest: unittest.cpp unittest.sm.h
 	g++ -std=c++11 -O3 \
 	    -o unittest \
 	    unittest.cpp \
+	    -Wfatal-errors \
 
 run: unittest
 	./unittest

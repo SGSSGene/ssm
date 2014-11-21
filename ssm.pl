@@ -449,13 +449,14 @@ sub generateCpp11 {
 		print OFILE "	std::unique_ptr<Machine> machine;$/";
 		print OFILE "	std::set<std::string> neededMethods;$/";
 		print OFILE "	SimpleStateMachine::Timer timer;$/";
-		print OFILE "	friend class CallMethod;$/";
+		print OFILE "	friend struct CallMethod;$/";
 		print OFILE "public:$/";
+		print OFILE "	struct MethodCall;$/";
 		print OFILE "	template<typename ...Args>$/";
 		print OFILE "	${Machine}(std::tuple<Args...> _t) {$/";
 		print OFILE "		initNeededMethods();$/";
 		print OFILE "		auto t = std::tuple_cat(std::make_tuple(&timer), _t);$/";
-		print OFILE "		autoRegisterAll(&actionMap, &conditionMap, t, neededMethods);$/";
+		print OFILE "		${Machine}autoRegisterAll(&actionMap, &conditionMap, t, neededMethods);$/";
 		print OFILE "		machine = std::move(get(actionMap, conditionMap));$/";
 		print OFILE "		machine->start();$/";
 		print OFILE "	}$/";
@@ -463,7 +464,7 @@ sub generateCpp11 {
 		print OFILE "	${Machine}(T* _o) {$/";
 		print OFILE "		initNeededMethods();$/";
 		print OFILE "		auto t = std::make_tuple(&timer, _o);$/";
-		print OFILE "		autoRegisterAll(&actionMap, &conditionMap, t, neededMethods);$/";
+		print OFILE "		${Machine}autoRegisterAll(&actionMap, &conditionMap, t, neededMethods);$/";
 		print OFILE "		machine = std::move(get(actionMap, conditionMap));$/";
 		print OFILE "		machine->start();$/";
 		print OFILE "	}$/";
@@ -497,7 +498,7 @@ sub generateCpp11 {
 		print OFILE "};$/";
 
 
-		print OFILE "DEF_GET_METHOD_CALL_BEGIN$/";
+		print OFILE "DEF_GET_METHOD_CALL_BEGIN(${Machine})$/";
 		while (my ($a, $av) = each %actions) {
 			print OFILE "\tDEF_GET_METHOD_CALL($a, $av->{call}, void";
 			print OFILE ", $av->{signature}" if $av->{signature};
@@ -510,15 +511,15 @@ sub generateCpp11 {
 		}
 		print OFILE "DEF_GET_METHOD_CALL_END$/";
 
-		print OFILE "DEF_AUTO_REGISTER_BEGIN$/";
+		print OFILE "DEF_AUTO_REGISTER_BEGIN(${Machine})$/";
 
 		while (my ($a, $av) = each %actions) {
-			print OFILE "	DEF_AUTO_REGISTER_ACTION($a)$/";
+			print OFILE "	DEF_AUTO_REGISTER_ACTION(${Machine}, $a)$/";
 		}
 		while (my ($a, $av) = each %conditions) {
-			print OFILE "	DEF_AUTO_REGISTER_CONDITION($a)$/";
+			print OFILE "	DEF_AUTO_REGISTER_CONDITION(${Machine}, $a)$/";
 		}
-		print OFILE "DEF_AUTO_REGISTER_END$/";
+		print OFILE "DEF_AUTO_REGISTER_END(${Machine})$/";
 
 		print OFILE "#endif$/";
 	}
