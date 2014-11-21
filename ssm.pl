@@ -403,8 +403,8 @@ sub printMachine {
 }
 sub generateCpp11 {
 
-	my ($inputFile, $outputFile) = (shift, shift);
-	my %HoA = &analyseCode($inputFile);
+	my ($inputFile, $outputFile, $_HoA) = (shift, shift, shift);
+	my %HoA = %{$_HoA};
 
 	my %actions    = ();
 	my %conditions = ();
@@ -580,9 +580,13 @@ if ($dot) {
 
 } elsif ($cpp11) {
 	$outputFile = "$inputFile.h";
-	open OFILE, ">$outputFile" or die $!;
+	my %HoA = &analyseCode($inputFile);
 
-	&generateCpp11($inputFile, $outputFile);
+	if (scalar @g_exportMachines > 0) {
+		open OFILE, ">$outputFile" or die $!;
+
+		&generateCpp11($inputFile, $outputFile, \%HoA);
+	}
 } else {
 	&printHelp;
 }
