@@ -550,6 +550,12 @@ sub generateCpp11 {
 	print OFILE "};$/";
 	print OFILE "}$/";
 	print OFILE "#endif$/";
+	print OFILE "#define FRIEND_WITH_SIMPLESTATEMACHINE";
+	foreach (@g_exportMachines) {
+		print OFILE " \\$/		friend class ::${_}MethodCall;";
+	}
+	print OFILE "$/";
+
 
 }
 sub printHelp

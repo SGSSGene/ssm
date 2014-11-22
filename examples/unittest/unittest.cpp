@@ -44,10 +44,12 @@ public:
 };
 
 class StringTest {
-public:
+private:
 	std::string getConstString() { return "test"; }
 	bool isStringTest(std::string s) { return s == "test"; }
 	std::string copyString(std::string s) { return s; }
+
+	FRIEND_WITH_SIMPLESTATEMACHINE;
 };
 
 int main(int, char**) {
