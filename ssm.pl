@@ -205,9 +205,14 @@ sub analyseCode {
 				$line = $1;
 			}
 			# Process if export keyword
-			if ($line =~ /^export\s+($word)\s*$/) {
+			if (my @matches = ($line =~ m/^export\s+($word)(?:\s*,\s*($word))*\s*$/)) {
 				if ($fileNbr == 1) {
-					@g_exportMachines[scalar @g_exportMachines] = $1;
+					while (scalar @matches > 0) {
+						my $m = shift @matches;
+						if ($m) {
+							@g_exportMachines[scalar @g_exportMachines] = $m;
+						}
+					}
 				}
 			# Process includes
 			} elsif ($line =~ /^include\s+($word.sm)\s*$/) {
