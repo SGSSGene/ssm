@@ -12,7 +12,7 @@ Tool to generate state machines for c++11.
 
 A simple state machine: *example1.sm*
 ```
-export CPPMachine
+export MyStateMachine
 
 MyStateMachine
 	MyStateStart: once helloWorld()
@@ -37,7 +37,7 @@ To use it with our state machine *example1.sm*. We first run `./ssm.pl --cpp11 e
 ...
 	MyClass myClass;
 
-	CPPMachine example1(&myClass);
+	MyStateMachine example1(&myClass);
 	example1.run();
 ```
 
