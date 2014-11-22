@@ -205,13 +205,11 @@ sub analyseCode {
 				$line = $1;
 			}
 			# Process if export keyword
-			if (my @matches = ($line =~ m/^export\s+($word)(?:\s*,\s*($word))*\s*$/)) {
+			if ($line =~ m/^export\s+($word(?:\s*,\s*$word)*)\s*$/) {
 				if ($fileNbr == 1) {
+					my @matches = $1 =~ /($word)/g;
 					while (scalar @matches > 0) {
-						my $m = shift @matches;
-						if ($m) {
-							@g_exportMachines[scalar @g_exportMachines] = $m;
-						}
+						@g_exportMachines[scalar @g_exportMachines] = pop @matches;
 					}
 				}
 			# Process includes
