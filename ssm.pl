@@ -380,7 +380,7 @@ sub printState {
 		print OFILE "		}$/";
 	}
 	print OFILE "		Parameter_Impl<$functionSignature> parameter(std::make_tuple($functionValues));$/";
-	print OFILE "		states[\"$stateName\"] = new State($executeType, $action, machines);$/";
+	print OFILE "		states[\"$stateName\"] = new State(\"$stateName\", $executeType, $action, machines);$/";
 	print OFILE "		Machine* m = superMachines[superMachines.size()-1].get();$/";
 	print OFILE "		State*   s = states[\"$stateName\"];$/";
 	print OFILE "		superStateConditionMap[superStateName+\"_${machineName}_${stateName}_equal_p\"] = [m, s](Parameter const* _p) {$/";
@@ -393,7 +393,7 @@ sub printState {
 sub printMachine {
 	my ($HoA, $machineName) = (shift, shift);
 	print OFILE "	{ std::map<std::string, State*> states;$/";
-	print OFILE "	machines.push_back(std::move(std::unique_ptr<Machine>(new Machine)));$/";
+	print OFILE "	machines.push_back(std::move(std::unique_ptr<Machine>(new Machine(\"${machineName}\"))));$/";
 	print OFILE "	ConditionParaMap stateConditionMap;$/";
 
 	while (my ($s, $sv) = each $HoA->{$machineName}{stateList}) {
@@ -449,7 +449,6 @@ sub generateCpp11 {
 		print OFILE "private:$/";
 		print OFILE "	ActionParaMap actionMap;$/";
 		print OFILE "	ConditionParaMap conditionMap;$/";
-		print OFILE "	std::unique_ptr<Machine> machine;$/";
 		print OFILE "	std::set<std::string> neededMethods;$/";
 		print OFILE "   std::set<std::string> notFoundMethods;$/";
 		print OFILE "	SimpleStateMachine::Timer timer;$/";

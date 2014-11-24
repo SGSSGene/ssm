@@ -15,9 +15,13 @@
 
 namespace SimpleStateMachine {
 
+class Machine;
+
 class IStateMachine {
 private:
 	std::string machineName;
+protected:
+	std::unique_ptr<Machine> machine;
 public:
 	IStateMachine(std::string const& _machineName)
 		: machineName(_machineName) {}
@@ -27,6 +31,7 @@ public:
 	virtual std::set<std::string> const& getUnmatchedSymbols() const = 0;
 
 	std::string const& getName() const { return machineName; }
+	std::unique_ptr<Machine> const& getMachine() const { return machine; }
 
 	virtual bool step() = 0;
 	void run() {
@@ -58,7 +63,6 @@ typedef std::map<std::string, ConditionPara>  ConditionParaMap;
 
 
 class State;
-class Machine;
 typedef std::vector<std::unique_ptr<Machine>>     MachinePtrList;
 typedef std::vector<std::unique_ptr<State>>       StatePtrList;
 typedef std::pair<Condition, State*>              Transition;
@@ -67,6 +71,8 @@ typedef std::vector<Transition>                   TransitionList;
 class State {
 public:
 	enum class ExecuteType { Any, Once, MaxOnce, MinOnce };
+private:
+	std::string name;
 protected:
 	ExecuteType    executeType;
 	Action         action;
@@ -75,14 +81,18 @@ protected:
 	bool           fired;
 
 public:
-	State(ExecuteType _executeType, Action _action, MachinePtrList& _machinePtrList)
-		: executeType(_executeType)
+	State(std::string _name, ExecuteType _executeType, Action _action, MachinePtrList& _machinePtrList)
+		: name(_name)
+		, executeType(_executeType)
 		, action(_action)
 		, machines(std::move(_machinePtrList)) {
 	}
 	void addTransition(Condition c, State* s) {
 		transitions.push_back(std::make_pair(c, s));
 	}
+
+	std::string const& getName() const { return name; }
+	MachinePtrList const& getMachines() const { return machines; }
 protected:
 	inline void startMachines();
 	inline void runMachines();
@@ -118,11 +128,13 @@ public:
 };
 
 class Machine {
+private:
+	std::string name;
 protected:
 	State*       initState;
 	State*       currentState;
 public:
-	Machine() {};
+	Machine(std::string _name) : name(_name) {};
 	void setInitState(State* _initState) { initState = _initState; }
 	void start() {
 		currentState = initState;
@@ -137,6 +149,7 @@ public:
 	bool hasTransitions() const {
 		return currentState->hasTransitions();
 	}
+	std::string const& getName() const { return name; }
 	State const* getCurrentState() const { return currentState; }
 };
 
